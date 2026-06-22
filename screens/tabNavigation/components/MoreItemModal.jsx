@@ -11,7 +11,7 @@ import {
   Image,
   ActivityIndicator,
 } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Ionicons from '@react-native-vector-icons/ionicons';
 import {useGetProductsIds} from '../../../ReactQuery/TanStackQueryHooks/storee/useStoreProducts';
 import {useGetStoreIds} from '../../../ReactQuery/TanStackQueryHooks/storee/useStore';
 

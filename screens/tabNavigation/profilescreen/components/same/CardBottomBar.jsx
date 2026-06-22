@@ -1,6 +1,6 @@
 import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
 import React, { useState, useRef, useEffect } from 'react';
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from '@react-native-vector-icons/ionicons';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import Comments from './Comments';
 import * as Keychain from 'react-native-keychain';

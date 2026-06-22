@@ -12,7 +12,7 @@ import {
   Modal,
   Alert,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from '@react-native-vector-icons/ionicons';
 import MaterialIcons from '@react-native-vector-icons/material-icons';
 import { format } from 'date-fns';
 import { useGetReplies, useAddReply,useLikeComment,useDislikeComment,useDeleteComment } from '../../../ReactQuery/TanStackQueryHooks/useComments';

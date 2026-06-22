@@ -8,7 +8,7 @@ import {
     ActivityIndicator,
     FlatList,
 } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Ionicons from '@react-native-vector-icons/ionicons';
 import {
     useGetStoreRating,
 } from '../../../../ReactQuery/TanStackQueryHooks/storee/useStoreRating';

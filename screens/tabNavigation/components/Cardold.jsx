@@ -5,7 +5,7 @@ import CardSideBar from './CardSideBar';
 import CardBottomBar from './CardBottomBar';
 import { useDispatch, useSelector } from 'react-redux';
 import Video from 'react-native-video';
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from '@react-native-vector-icons/ionicons';
 import TrackPlayer, { RepeatMode, State } from 'react-native-track-player';
 
 // TrackPlayer will handle audio focus/silent switch based on platform defaults

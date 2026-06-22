@@ -11,7 +11,7 @@ import {
 } from 'react-native-gesture-handler';
 import FastImageOrImage from './feed-performance/FastImageOrImage';
 import Video from 'react-native-video';
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from '@react-native-vector-icons/ionicons';
 import { useNavigation } from '@react-navigation/native';
 import SocialDropdown from './SocialDropdown';
 import MoreItemModal from './MoreItemModal';

@@ -16,7 +16,7 @@ import {
   StoreOwnerProvider,
 } from '../../context/IsStoreOwner';
 import Loader from '../../components/Loader';
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from '@react-native-vector-icons/ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {useGetStoreById} from '../../ReactQuery/TanStackQueryHooks/storee/useStore';
 import Store_OrderScreen from './Store_OrderScreen';

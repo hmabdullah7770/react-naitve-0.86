@@ -10,7 +10,7 @@ import {
   Pressable,
 } from 'react-native';
 import PropTypes from 'prop-types';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Ionicons from '@react-native-vector-icons/ionicons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useToggleFollow } from '../../../../ReactQuery/TanStackQueryHooks/usefollow';
 

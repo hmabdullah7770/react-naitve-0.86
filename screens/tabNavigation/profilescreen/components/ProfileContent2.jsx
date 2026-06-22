@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image } from 'react-native';
 import React, { useState } from 'react';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Ionicons from '@react-native-vector-icons/ionicons';
 
 const ProfileContent2 = ({ isOwner, userData, isLoading, isError }) => {
   const [activeTab, setActiveTab] = useState('Network');

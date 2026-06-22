@@ -12,7 +12,7 @@ import {
   Dimensions,
   ActivityIndicator,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from '@react-native-vector-icons/ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {useGetProductsId} from '../../ReactQuery/TanStackQueryHooks/storee/useStoreProducts';
 import {OwnerContext} from '../../context/IsOwner';

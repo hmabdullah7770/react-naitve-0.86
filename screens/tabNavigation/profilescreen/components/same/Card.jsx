@@ -15,7 +15,7 @@ import CardBottomBar from './CardBottomBar';
 import ProfileHeader from './ProfileHeader';
 import SocialDropdown from './SocialDropdown';
 import Video from 'react-native-video';
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from '@react-native-vector-icons/ionicons';
 import * as Keychain from 'react-native-keychain';
 
 // ✅ Text Post Component

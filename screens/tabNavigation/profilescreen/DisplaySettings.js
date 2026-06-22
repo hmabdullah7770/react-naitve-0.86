@@ -1,6 +1,6 @@
 import {StyleSheet, Text, View, TouchableOpacity} from 'react-native';
 import React from 'react';
-import IonIcon from 'react-native-vector-icons/Ionicons';
+import IonIcon from '@react-native-vector-icons/ionicons';
 import {useTheme, THEME_OPTIONS} from '../../../theme/ThemeContext';
 
 const OPTIONS = [

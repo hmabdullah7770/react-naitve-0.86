@@ -9,7 +9,7 @@ import {
   Image,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Ionicons from '@react-native-vector-icons/ionicons';
 import { useGetUser,useGetUserById  } from '../../../ReactQuery/TanStackQueryHooks/useGetUser';
 // import * as Keychain from 'react-native-keychain';
 import { OwnerContext } from '../../../context/IsOwner';

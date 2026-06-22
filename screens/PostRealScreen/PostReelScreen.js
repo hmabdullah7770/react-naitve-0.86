@@ -11,7 +11,7 @@ import {
 import { FlatList } from 'react-native-gesture-handler';
 
 import { useRoute, useNavigation, useIsFocused } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from '@react-native-vector-icons/ionicons';
 import { useSmartFilteredFeed } from '../../ReactQuery/TanstackDB/FilterCategoury';
 import ReelCard from '../tabNavigation/components/ReelCard';
 
