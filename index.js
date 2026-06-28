@@ -8,6 +8,16 @@ import {name as appName} from './app.json';
 import database from './db';
 import FEATURE_FLAGS from './config/featureFlags'; // ← import flag
 
+import { getMessaging, setBackgroundMessageHandler } from '@react-native-firebase/messaging';
+import { getApp } from '@react-native-firebase/app';
+
+
+// ← Must be outside everything, top level
+setBackgroundMessageHandler(getMessaging(getApp()), async remoteMessage => {
+  console.log('Background message received:', remoteMessage);
+});
+
+
 async function prepareApp() {
   try {
 

@@ -313,12 +313,14 @@ export const signup = (signupData) => {
 
 
 
-export const login = (username, password,email) =>{
+export const login = (username, password,email,fcmToken) =>{
   console.log('Making login request to:', '/users/login');
+  console.log("fcmToken",fcmToken)
   return api.post('/users/login', {
      email,
     username,
     password,
+    fcmToken
     // azureUserName: 'ayesha.zahid'
   });
 };

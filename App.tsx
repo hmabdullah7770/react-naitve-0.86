@@ -30,6 +30,8 @@ import database from './db'
 import { tokencheck } from './Redux/action/auth';
 import { BottomSheetProvider } from '@swmansion/react-native-bottom-sheet';
 
+import { setupNotificationListeners, listenTokenRefresh } from './services/notificationService'
+
 
 // Add this to your App.js
 
@@ -155,6 +157,9 @@ const App = () => {
     // Call the async function to perform the check and dispatch
     checkAndDispatchToken();
 
+    setupNotificationListeners();          // ← add this
+    const unsubscribe = listenTokenRefresh(); // ← add this
+     return () => unsubscribe(); // ← cleanup
     // Optional: Add a cleanup function if needed
     // return () => {
     //   // Cleanup logic

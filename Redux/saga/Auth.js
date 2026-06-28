@@ -12,7 +12,7 @@ import { queryClient } from '../../App';
 // import { triggerResponseInterceptor, shouldTriggerInterceptor } from '../utils/triggerInterceptor';
 // import {RefreshtokenService } from '../../services/refreshtokenservice';
 // import EncryptedStorage from 'react-native-encrypted-storage';
-
+import { registerFCMToken } from '../../services/notificationService';
 
 function* MatchOtpSaga(payload) {
   try {
@@ -354,7 +354,9 @@ function* LoginSaga(payload) {
   try {
     console.log('LoginSaga started with payload:', payload);
     yield put(actions.setloading(true));
-    const response = yield call(api.login, payload.username, payload.password,payload.email); //,payload.username
+    const fcmToken = yield call(registerFCMToken); // ← get FCM token
+    console.log("fcmToken in auth saga",fcmToken)
+    const response = yield call(api.login, payload.username, payload.password,payload.email,fcmToken); //,payload.username
 
     console.log('Making API call with credentials...');
     if (response.status === 200) {
