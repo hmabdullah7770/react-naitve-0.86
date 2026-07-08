@@ -13,7 +13,7 @@ import {useDispatch} from 'react-redux';
 import ProfileStack from '../screens/tabNavigation/profilescreen/ProfileStack';
 import CreateStoreScreens from '../screens/storeScreens/BeforeStore/BeforeStoreStack'; // ✅ Import
 import StoreScreen from '../screens/storeScreens/StoreScreens';
-import NotificationStack from '../screens/NotificationScreens/NotificationStack';
+import NotificationScreen  from '../screens/NotificationScreens/NotificationScreen';
 import MessageStack from '../screens/MessageScreens/MessageStack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import VideoFeedStack from '../screens/tabNavigation/VideoFeedscreen/VideoFeedStack';
@@ -303,7 +303,7 @@ useEffect(() => {
               options={{headerShown: false}}
             />
           
-          <App.Screen name="NotificationStack" component={NotificationStack} />
+          <App.Screen name="NotificationScreen" component={NotificationScreen} />
 
           <App.Screen name="MessageStack" component={MessageStack} />
 
