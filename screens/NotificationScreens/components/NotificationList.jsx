@@ -10,7 +10,7 @@ import { FlashList } from '@shopify/flash-list';
 import {
     useGetNotifications,
     useMarkAsRead,
-} from '../../hooks/notification/useNotification';
+} from '../../../ReactQuery/TanStackQueryHooks/useNotification';
 import { useNotificationContext } from '../context/NotificationContext';
 import NotificationItem from './NotificationItem';
 

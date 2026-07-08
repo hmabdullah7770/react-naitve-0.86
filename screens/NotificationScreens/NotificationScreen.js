@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { NotificationProvider } from './context/NotificationContext';
 import NotificationTypesList from './components/NotificationTypesList';
 import NotificationList from './components/NotificationList';
-import { useMarkAllAsRead } from '../hooks/notification/useNotification';
+import { useMarkAllAsRead } from '../../ReactQuery/TanStackQueryHooks/useNotification';
 
 const NotificationHeader = () => {
   const { mutate: markAllRead } = useMarkAllAsRead();

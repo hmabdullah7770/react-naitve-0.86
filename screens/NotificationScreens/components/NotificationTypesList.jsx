@@ -7,7 +7,7 @@ import {
     ActivityIndicator,
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
-import { useNotificationTypes } from '../../hooks/notification/useNotification';
+import { useNotificationTypes } from '../../../ReactQuery/TanStackQueryHooks/useNotification';
 import { useNotificationContext } from '../context/NotificationContext';
 
 const NotificationTypesList = () => {
