@@ -1,4 +1,4 @@
-import {getallPost} from '../../API/post';
+import {getallPost,SearchPost} from '../../API/post';
 import { useQuery } from '@tanstack/react-query';
 
 export const useGetAllPost = (
@@ -63,6 +63,61 @@ export const useGetAllPost = (
 
   return result;
 };
+
+
+export const useSearchPost = (
+  { search, adminpassword, from, addcomment, filtername,category } = {},
+  options = {}
+) => {
+  console.log('🔵 [useSearchPost] Hook called with params:', {
+    search,
+    adminpassword,
+    from,
+    addcomment,
+    filtername,
+    category,
+    enabled: options.enabled,
+  });
+
+  const result = useQuery({
+    queryKey: ['searchPost', search, adminpassword, from, addcomment, filtername, category],
+    queryFn: async () => {
+      console.log('🚀 [useSearchPost] API CALL STARTED - Searching posts...');
+      console.log('📤 Request params:', { search, adminpassword, from, addcomment, filtername, category });
+
+      try {
+        const response = await SearchPost({ search, adminpassword, from, addcomment, filtername, category });
+        console.log('✅ [useSearchPost] API CALL SUCCESS');
+        console.log('📥 Full Response:', response);
+        console.log('📦 Response data:', response?.data);
+        return response;
+      } catch (error) {
+        console.log('❌ [useSearchPost] API CALL FAILED');
+        console.log('💥 Error:', error);
+        console.log('💥 Error response:', error?.response);
+        console.log('💥 Error message:', error?.message);
+        throw error;
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    enabled: options.enabled ?? !!search, // only run when there's an actual search term, by default
+    ...options,
+  });
+
+  console.log('📊 [useSearchPost] Query State:', {
+    isLoading: result.isLoading,
+    isFetching: result.isFetching,
+    isError: result.isError,
+    isSuccess: result.isSuccess,
+    dataExists: !!result.data,
+    enabled: options.enabled,
+  });
+
+  return result;
+};
+
+
 
 // export const useGetAllPost = (limit,cursor,userId,category,sortBy,sortType,includeCount) => { {
 //   return useQuery(

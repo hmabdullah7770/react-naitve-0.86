@@ -32,3 +32,18 @@ export const DeletePost = (postId) =>
   api.delete(`/post/${encodeURIComponent(postId)}`, {
 
   });
+
+
+  export const SearchPost =()=>
+    api.get('/posts/post/search', {
+      params: {
+        // Add any query parameters needed for the search
+         search,
+         adminpassword:'(Bunny)tota#34#',
+         from,
+         addcomment,
+         filtername,
+         category
+
+      }
+    })
