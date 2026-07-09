@@ -2,7 +2,7 @@
 import { appSchema, tableSchema } from '@nozbe/watermelondb'
 
 export const mySchema = appSchema({
-  version: 5,
+  version: 6,
   tables: [
     tableSchema({
       name: 'posts',
@@ -42,5 +42,15 @@ export const mySchema = appSchema({
       name: 'pending_removals',
       columns: [{ name: 'post_id', type: 'string' }]
     }),
+
+
+     // ✅ NEW table for pending read notifications
+    tableSchema({
+      name: 'pending_read_notifications',
+      columns: [
+        { name: 'notification_id', type: 'string' },
+      ]
+    }),
+    
   ]
 })

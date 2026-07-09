@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { NotificationProvider } from './context/NotificationContext';
 import NotificationTypesList from './components/NotificationTypesList';
 import NotificationList from './components/NotificationList';
-import { useMarkAllAsRead } from '../../ReactQuery/TanStackQueryHooks/useNotification';
+import useReadNotificationQueue from '../hooks/useReadNotificationQueue';
+import { useMarkAllAsRead } from '../ReactQuery/TanStackQueryHooks/useNotification';
 
 const NotificationHeader = () => {
   const { mutate: markAllRead } = useMarkAllAsRead();
@@ -17,14 +19,33 @@ const NotificationHeader = () => {
   );
 };
 
+const NotificationScreenContent = () => {
+  // ✅ Initialize queue hook (handles boot & background flushes)
+  const { flushReadNotificationsOnScreenLeave } = useReadNotificationQueue();
+
+  // ✅ Flush when user leaves the screen
+  useFocusEffect(
+    React.useCallback(() => {
+      return () => {
+        // runs on screen unfocus (user leaves)
+        flushReadNotificationsOnScreenLeave();
+      };
+    }, [flushReadNotificationsOnScreenLeave])
+  );
+
+  return (
+    <View style={styles.container}>
+      <NotificationHeader />
+      <NotificationTypesList />
+      <NotificationList />
+    </View>
+  );
+};
+
 const NotificationScreen = () => {
   return (
     <NotificationProvider>
-      <View style={styles.container}>
-        <NotificationHeader />
-        <NotificationTypesList />
-        <NotificationList />
-      </View>
+      <NotificationScreenContent />
     </NotificationProvider>
   );
 };
@@ -57,6 +78,76 @@ const styles = StyleSheet.create({
     color: '#007AFF',
   },
 });
+
+
+// new code 
+
+
+// import React from 'react';
+// import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+// import { NotificationProvider } from './context/NotificationContext';
+// import NotificationTypesList from './components/NotificationTypesList';
+// import NotificationList from './components/NotificationList';
+// import { useMarkAllAsRead } from '../../ReactQuery/TanStackQueryHooks/useNotification';
+
+// const NotificationHeader = () => {
+//   const { mutate: markAllRead } = useMarkAllAsRead();
+//   return (
+//     <View style={styles.header}>
+//       <Text style={styles.headerTitle}>Notifications</Text>
+//       <TouchableOpacity onPress={markAllRead} activeOpacity={0.7}>
+//         <Text style={styles.markAll}>Mark all read</Text>
+//       </TouchableOpacity>
+//     </View>
+//   );
+// };
+
+// const NotificationScreen = () => {
+//   return (
+//     <NotificationProvider>
+//       <View style={styles.container}>
+//         <NotificationHeader />
+//         <NotificationTypesList />
+//         <NotificationList />
+//       </View>
+//     </NotificationProvider>
+//   );
+// };
+
+// export default NotificationScreen;
+
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     backgroundColor: '#f9f9f9',
+//   },
+//   header: {
+//     flexDirection: 'row',
+//     justifyContent: 'space-between',
+//     alignItems: 'center',
+//     paddingHorizontal: 16,
+//     paddingTop: 50,
+//     paddingBottom: 12,
+//     backgroundColor: '#fff',
+//     borderBottomWidth: 1,
+//     borderColor: '#eee',
+//   },
+//   headerTitle: {
+//     fontSize: 18,
+//     fontWeight: 'bold',
+//     color: '#111',
+//   },
+//   markAll: {
+//     fontSize: 13,
+//     color: '#007AFF',
+//   },
+// });
+
+
+
+
+
+// very old code 
 
 // import React, {useEffect, useState} from 'react';
 // import {createStackNavigator} from '@react-navigation/stack';

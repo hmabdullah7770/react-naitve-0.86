@@ -6,6 +6,7 @@ import Post from './models/Post'
 import PendingFavourite from './models/PendingFavourite' // ✅ add this
 import PendingRating from './models/PendingRating' // ✅ add this
 import PendingRemoval from './models/PendingRemoval' 
+import PendingReadNotification from './models/PendingReadNotification';
 
 // JSI is used automatically by SQLiteAdapter when available
 const adapter = new SQLiteAdapter({
@@ -20,7 +21,7 @@ const adapter = new SQLiteAdapter({
 
 const database = new Database({
   adapter,
-  modelClasses: [Post, PendingFavourite, PendingRating, PendingRemoval], // ✅ register models
+  modelClasses: [Post, PendingFavourite, PendingRating, PendingRemoval,PendingReadNotification], // ✅ register models
 })
 
 export default database

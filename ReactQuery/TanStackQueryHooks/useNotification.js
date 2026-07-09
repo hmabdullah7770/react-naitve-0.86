@@ -52,8 +52,14 @@ export const useNotificationTypes = (options = {}) => {
       const response = await getNotificationType();
       return response.data;
     },
-    staleTime: 5 * 60 * 1000, // types rarely change
-    ...options,
+    // staleTime: 5 * 60 * 1000, // types rarely change
+    // ...options,
+
+    staleTime: Infinity,       // never auto-refetch during this app session
+    gcTime: Infinity,          // never evict from cache while app is running
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 };
 
