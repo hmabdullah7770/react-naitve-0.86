@@ -22,7 +22,9 @@ export const useNotificationCount = (options = {}) => {
   return useQuery({
     queryKey: ['notifications', 'count'],
     queryFn: async () => {
+      console.log('🌐 useNotificationCount — cache miss, calling API...');
       const response = await notificationCount();
+      console.log('✅ useNotificationCount — API response received:', response.data);
       return response.data;
     },
     staleTime: 30 * 1000,
@@ -35,7 +37,9 @@ export const useUnreadNotificationCount = (options = {}) => {
   return useQuery({
     queryKey: ['notifications', 'unread-count'],
     queryFn: async () => {
+      console.log('🌐 useUnreadNotificationCount — cache miss, calling API...');
       const response = await unreadNotification();
+      console.log('✅ useUnreadNotificationCount — API response received:', response.data);
       return response.data;
     },
     staleTime: 15 * 1000,
@@ -49,7 +53,9 @@ export const useNotificationTypes = (options = {}) => {
   return useQuery({
     queryKey: ['notifications', 'types'],
     queryFn: async () => {
+      console.log('🌐 useNotificationTypes — cache miss, calling API...');
       const response = await getNotificationType();
+      console.log('✅ useNotificationTypes — API response received:', response.data);
       return response.data;
     },
     // staleTime: 5 * 60 * 1000, // types rarely change
@@ -69,7 +75,9 @@ export const useAddNotificationType = () => {
 
   return useMutation({
     mutationFn: async ({ type, label, description }) => {
+      console.log('🌐 useAddNotificationType — calling API with:', { type, label, description });
       const response = await addNotificationType(type, label, description);
+      console.log('✅ useAddNotificationType — API response received:', response.data);
       return response.data;
     },
     onSuccess: () => {
@@ -79,18 +87,42 @@ export const useAddNotificationType = () => {
 };
 
 /* ---------------- GET NOTIFICATIONS (infinite list) ---------------- */
-export const useGetNotifications = (limit = 20, options = {}) => {
+// export const useGetNotifications = (limit = 20, options = {}) => {
+//   return useInfiniteQuery({
+//     queryKey: ['notifications', 'list'],
+//     queryFn: async ({ pageParam = null }) => {
+//       console.log('🌐 useGetNotifications — cache miss, calling API with pageParam:', pageParam, 'limit:', limit);
+//       const response = await getNotifications(pageParam, limit);
+//       console.log('✅ useGetNotifications — API response received:', response.data);
+//       return response.data;
+//     },
+//     initialPageParam: null,
+//     getNextPageParam: (lastPage) => {
+//       const pagination = lastPage?.data?.pagination;
+//       if (!pagination?.hasNextPage) return undefined;
+//       return pagination.nextCursor;
+//     },
+//     staleTime: 10 * 1000,
+//     gcTime: 5 * 60 * 1000,
+//     ...options,
+//   });
+// };
+
+
+export const useGetNotifications = (limit = 20, type = 'all', options = {}) => {
   return useInfiniteQuery({
-    queryKey: ['notifications', 'list'],
-    queryFn: async ({ pageParam = null }) => {
-      const response = await getNotifications(pageParam, limit);
+    // 🔑 type in the key = new query when chip changes
+    queryKey: ['notifications', 'list', type, limit],
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await getNotifications(pageParam, limit, type);
       return response.data;
     },
-    initialPageParam: null,
+    initialPageParam: 1,
     getNextPageParam: (lastPage) => {
+      // matches your backend shape: { notifications, pagination: { page, totalPages, hasNextPage } }
       const pagination = lastPage?.data?.pagination;
       if (!pagination?.hasNextPage) return undefined;
-      return pagination.nextCursor;
+      return pagination.page + 1;
     },
     staleTime: 10 * 1000,
     gcTime: 5 * 60 * 1000,
@@ -98,13 +130,17 @@ export const useGetNotifications = (limit = 20, options = {}) => {
   });
 };
 
+
+
 /* ---------------- CREATE NOTIFICATION ---------------- */
 export const useCreateNotification = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ recipient, sender, store, type, title, body }) => {
+      console.log('🌐 useCreateNotification — calling API with:', { recipient, sender, store, type, title, body });
       const response = await createNotification(recipient, sender, store, type, title, body);
+      console.log('✅ useCreateNotification — API response received:', response.data);
       return response.data;
     },
     onSuccess: () => {
@@ -121,7 +157,9 @@ export const useMarkAsRead = () => {
     mutationFn: async (notificationIds) => {
       // always send an array, even for a single id
       const ids = Array.isArray(notificationIds) ? notificationIds : [notificationIds];
+      console.log('🌐 useMarkAsRead — calling API with ids:', ids);
       const response = await markasread(ids);
+      console.log('✅ useMarkAsRead — API response received:', response.data);
       return response.data;
     },
 
@@ -167,7 +205,9 @@ export const useMarkAllAsRead = () => {
 
   return useMutation({
     mutationFn: async () => {
+      console.log('🌐 useMarkAllAsRead — calling API...');
       const response = await markallasread();
+      console.log('✅ useMarkAllAsRead — API response received:', response.data);
       return response.data;
     },
 
@@ -210,7 +250,9 @@ export const useDeleteNotification = () => {
   return useMutation({
     mutationFn: async (notificationIds) => {
       const ids = Array.isArray(notificationIds) ? notificationIds : [notificationIds];
+      console.log('🌐 useDeleteNotification — calling API with ids:', ids);
       const response = await deleteNotification(ids);
+      console.log('✅ useDeleteNotification — API response received:', response.data);
       return response.data;
     },
 
@@ -255,7 +297,9 @@ export const useDeleteAllNotifications = () => {
 
   return useMutation({
     mutationFn: async () => {
+      console.log('🌐 useDeleteAllNotifications — calling API...');
       const response = await Deleteallnotification();
+      console.log('✅ useDeleteAllNotifications — API response received:', response.data);
       return response.data;
     },
 

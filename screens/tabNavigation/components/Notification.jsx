@@ -15,7 +15,7 @@ const Notification = () => {
   const totalCount = unreadCount + newCount;
 
   const handlePress = () => {
-    navigation.navigate('NotificationScreens', { screen: 'ALLNotifications' });
+    navigation.navigate('NotificationScreen');
 
   }
 

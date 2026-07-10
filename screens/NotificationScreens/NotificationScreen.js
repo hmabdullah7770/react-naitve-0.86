@@ -4,8 +4,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import { NotificationProvider } from './context/NotificationContext';
 import NotificationTypesList from './components/NotificationTypesList';
 import NotificationList from './components/NotificationList';
-import useReadNotificationQueue from '../hooks/useReadNotificationQueue';
-import { useMarkAllAsRead } from '../ReactQuery/TanStackQueryHooks/useNotification';
+import useReadNotificationQueue from '../../hooks/useReadNotificationQueue';
+import { useMarkAllAsRead } from '../../ReactQuery/TanStackQueryHooks/useNotification';
 
 const NotificationHeader = () => {
   const { mutate: markAllRead } = useMarkAllAsRead();
