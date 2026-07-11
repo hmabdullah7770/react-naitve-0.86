@@ -22,7 +22,8 @@ import PostReelScreen from '../screens/PostRealScreen/PostReelScreen';
 // import {OwnerProvider} from '../context/IsOwner';
 // import { useContext } from 'react';
 import { OwnerContext } from '../context/IsOwner';
-
+import { FilterProvider } from '../screens/tabNavigation/context/FilterContext';
+import SearchScreen from '../screens/SearchSceen/SearchSceen'; // Import the dedicated search screen
 
 
 
@@ -275,6 +276,7 @@ useEffect(() => {
         {/* Show loader if loading state is true */}
         {loading && <Loader />}
         {/* Set up the navigation stack */}
+        <FilterProvider >
         <App.Navigator>
           {/* Define your screens */}
           <App.Screen
@@ -321,11 +323,18 @@ useEffect(() => {
 
           <App.Screen name="VideoFeedStack" component={VideoFeedStack} />
 
+           <App.Screen
+            name="SearchScreen"
+            component={SearchScreen}
+            options={{headerShown: false}}
+          />
+
           {/* Add other screens here, e.g.: */}
           {/* <App.Screen name="Home" component={HomeScreen} /> */}
           {/* <App.Screen name="Dispatch" component={DispatchScreen} /> */}
           {/* ... other screens */}
         </App.Navigator>
+        </FilterProvider>
       {/* </OwnerProvider> */}
     </>
   );
