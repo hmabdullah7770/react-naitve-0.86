@@ -34,8 +34,8 @@ export const DeletePost = (postId) =>
   });
 
 
-  export const SearchPost =()=>
-    api.get('/posts/post/search', {
+  export const SearchPost =({search,  from,adminpassword, addcomment, filtername, category, size})=>
+    api.get('/post/posts/search', {
       params: {
         // Add any query parameters needed for the search
          search,
@@ -43,7 +43,8 @@ export const DeletePost = (postId) =>
          from,
          addcomment,
          filtername,
-         category
+         category,
+         size
 
       }
     })

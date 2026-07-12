@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 3,
-    backgroundColor: '#FF6B35', // Orange color matching the design
+    backgroundColor: '#1FFFA5', // Orange color matching the design
     borderRadius: 1.5,
   },
 });

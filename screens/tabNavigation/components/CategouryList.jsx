@@ -127,6 +127,9 @@ const styles = StyleSheet.create({
   },
   selectedText: {
     color: '#fff',
+     textShadowColor: '#333',
+    textShadowOffset: {width: 0.1, height: 0.1},
+    textShadowRadius: 2,
   },
 });
 

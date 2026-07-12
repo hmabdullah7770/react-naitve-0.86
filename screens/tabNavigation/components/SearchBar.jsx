@@ -3,14 +3,22 @@ import React, { useState, useRef, useEffect } from 'react';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
 import FilterModal from './FilterModal';
+import { useDispatch } from 'react-redux'; // 🆕
+import { useFilter } from '../../tabNavigation/context/FilterContext'; // 🆕
 
-const SearchBar = ({ placeholder = "Search", onSubmit, isPremium = true }) => {
+import { setSearchPayload, clearSearchPayload } from '../../../Redux/action/search'; // 🆕 adjust path/casing to match your file
+
+
+const SearchBar = ({ placeholder = "Search", onSubmit, isPremium = false }) => {
   const navigation = useNavigation();
   const [filterVisible, setFilterVisible] = useState(false);
   const [draftText, setDraftText] = useState('');
   const [committedText, setCommittedText] = useState('');
   const didSubmitRef = useRef(false);
+  const dispatch = useDispatch(); // 🆕
   const inputRef = useRef(null);
+  const { selectedFilters } = useFilter(); // 🆕
+  const filtername = selectedFilters[0] ?? undefined; // 🆕 now it's actually defined
 
   useEffect(() => {
     if (isPremium) return; // no inline keyboard flow for premium users
@@ -33,6 +41,15 @@ const SearchBar = ({ placeholder = "Search", onSubmit, isPremium = true }) => {
     didSubmitRef.current = true;
     setCommittedText(draftText);
     onSubmit?.(draftText);
+
+
+    // 🆕 dispatch to Redux instead of only local state
+    const trimmed = draftText.trim();
+    if (trimmed) {
+      dispatch(setSearchPayload({ search: trimmed,filtername }));
+    } else {
+      dispatch(clearSearchPayload());
+    }
     Keyboard.dismiss();
   };
 
@@ -40,6 +57,7 @@ const SearchBar = ({ placeholder = "Search", onSubmit, isPremium = true }) => {
     setDraftText('');
     setCommittedText('');
     onSubmit?.('');
+       dispatch(clearSearchPayload()); // 🆕
   };
 
   const handlePremiumPress = () => {

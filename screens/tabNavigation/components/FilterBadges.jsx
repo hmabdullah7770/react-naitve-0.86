@@ -23,7 +23,7 @@ const FilterBadges = () => {
             hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
             style={styles.closeBtn}
           >
-            <Icon name="close" size={14} color="#0a66c2" />
+            <Icon name="close" size={14} color="#070707" />
           </TouchableOpacity>
         </View>
       ))}
@@ -40,13 +40,13 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 7,
      paddingHorizontal: 16, // ← match NavBar content's horizontal padding
   },
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#e8f0fe',
+    backgroundColor: '#1FFFA5',
     borderRadius: 14,
     paddingVertical: 6,
     paddingHorizontal: 10,
@@ -54,12 +54,13 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: 12,
-    color: '#0a66c2',
-    fontWeight: '500',
+    color: '#0c0c0c',
+    fontWeight: '800',
     marginRight: 6,
   },
   closeBtn: {
     marginLeft: 2,
+   
   },
 });// import React from 'react';
 // import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';

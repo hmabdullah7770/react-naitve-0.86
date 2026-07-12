@@ -4,6 +4,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useCategoryNames } from '../../../ReactQuery/TanStackQueryHooks/useCategories';
 import { useSmartFilteredFeed, saveScrollPosition, } from '../../../ReactQuery/TanstackDB/FilterCategoury';
 import { usegetPostsByCategoryFavouret } from '../../../ReactQuery/TanStackQueryHooks/useFavouret';
+import { useSearchPost } from '../../../ReactQuery/TanStackQueryHooks/usePost'; // 🆕 add this import
+
 import Card from './Card';
 import SkeletonPost from './feed-performance/SkeletonPost';
 import { FlashList } from '@shopify/flash-list';
@@ -12,10 +14,12 @@ import FEATURE_FLAGS from '../../../config/featureFlags';
 import useFiveStarFavourite from '../../../hooks/useFiveStarFavourite';
 import useRatingQueue from '../../../hooks/useRatingQueue';
 import useRemoveFavouretQueue from '../../../hooks/useRemoveFavouretQueue';
+
 // ✅ Fix — add this
 import { useNavigation } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import useHLSPrefetch from '../../../hooks/useHLSPrefetch';
+// import { useSelector, useDispatch } from 'react-redux'; // useSelector already imported, just
 
 const LIMIT = 20;
 const VIEWPORT_STAY_MS = 50;
@@ -33,9 +37,13 @@ const Feed = ({
   categoryHeight = 0,
   isScreenFocused = true,
   selectedCategoryId,  // ← receive as prop
+  //  searchPayload,
 }) => {
 
-  console.log('>>>>>>>>[Feed] 🔄 Feed component rendering');
+   const { searchPayload } = useSelector(state => state.search); // 🆕 read from Redux instead
+  
+   
+   console.log('>>>>>>>>[Feed] 🔄 Feed component rendering');
   const navigation = useNavigation(); // ✅ Get navigation instance
   // inside Feed component:
   const queryClient = useQueryClient();
@@ -137,6 +145,7 @@ const Feed = ({
   //  const selectedCategoryName = categoriesWithAll[selectedCategoryId]?.name;
   const selectedCategoryName = categoriesWithAll.find(cat => cat.id === selectedCategoryId)?.name;
 
+  const isSearchMode = !!searchPayload?.search; // 🆕
   const prevCategoryRef = useRef(selectedCategoryName);
 
 
@@ -164,16 +173,36 @@ const Feed = ({
   // ── Feed data ────────────────────────────────────────────────────────────────
   const isFavouret = selectedCategoryName === 'Favouret';
 
+  // const smartFeed = useSmartFilteredFeed(
+  //   isFavouret ? null : selectedCategoryName,   // skip when Favouret
+  //   LIMIT
+  // );
   const smartFeed = useSmartFilteredFeed(
-    isFavouret ? null : selectedCategoryName,   // skip when Favouret
-    LIMIT
-  );
+  isSearchMode || isFavouret ? null : selectedCategoryName, // 🆕 add isSearchMode check
+  LIMIT
+);
 
-  const favouretFeed = usegetPostsByCategoryFavouret(
-    isFavouret ? 'All' : null,
-    // isFavouret ? selectedCategoryName : null,   // skip when NOT Favouret
-    LIMIT
-  );
+  // const favouretFeed = usegetPostsByCategoryFavouret(
+  //   isFavouret ? 'All' : null,
+  //   // isFavouret ? selectedCategoryName : null,   // skip when NOT Favouret
+  //   LIMIT
+  // );
+
+const favouretFeed = usegetPostsByCategoryFavouret(
+  isSearchMode ? null : (isFavouret ? 'All' : null), // 🆕 add isSearchMode check
+  LIMIT
+);
+
+const searchFeed = useSearchPost( // 🆕 new hook
+  {
+    search: searchPayload?.search,
+    filtername: searchPayload?.filtername,
+    category: selectedCategoryName, // always current category, per your rule
+    size: LIMIT,
+  },
+  { enabled: isSearchMode }
+);
+
 
 
   // ── Feed data ────────────────────────────────────────────────────────────────
@@ -190,7 +219,8 @@ const Feed = ({
     savedScrollPosition,
     categoryFirstPost,
 
-  } = isFavouret ? favouretFeed : smartFeed;
+  // } = isFavouret ? favouretFeed : smartFeed;
+} = isSearchMode ? searchFeed : (isFavouret ? favouretFeed : smartFeed); // 🆕 
 
   const isFetchingPrevRef = useRef(false);
   isFetchingPrevRef.current = isFetchingPreviousPage;

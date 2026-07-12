@@ -20,17 +20,34 @@ import api from '../services/apiservice';
 //   });
 
 
-export const addbanner = (bannerImage,bannerbutton) =>
-  api.post('/banner/createbanner',
+// export const addbanner = (bannerImage,bannerbutton) =>
+//   api.post('/banner/createbanner',
 
 
-    {
+//     {
 
-        bannerImage,
+//         bannerImage,
+//         bannerbutton,
 
+//   });
+
+
+
+export const addbanner = (selectedImage, bannerbutton) => {
+  const formData = new FormData();
+
+  formData.append('bannerImage', {
+    uri: selectedImage.uri,
+    type: selectedImage.type || 'image/jpeg',
+    name: selectedImage.fileName || 'banner.jpg',
   });
 
+  formData.append('bannerbutton', bannerbutton);
 
+  return api.post('/banner/createbanner', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+};
 
 
 export const deletebanner = (bannerId) =>

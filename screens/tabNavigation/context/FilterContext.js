@@ -6,6 +6,8 @@ export const FILTER_OPTIONS = [
   { key: 'title', label: 'Title' },
   { key: 'description', label: 'Description' },
   { key: 'username', label: 'Username' },
+  { key: 'store', label: 'Store' },
+  // { key: 'product', label: 'Product' },
 ];
 
 export const FilterProvider = ({ children }) => {

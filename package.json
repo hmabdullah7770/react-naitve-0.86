@@ -2,6 +2,15 @@
   "name": "ecommereceverse",
   "version": "0.0.1",
   "private": true,
+"codegenConfig": {
+    "name": "VideoFramesSpec",
+    "type": "modules",
+    "jsSrcsDir": "native",
+    "android": {
+      "javaPackageName": "com.ecommereceverse.videoframes"
+    }
+  },
+
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios",
@@ -45,6 +54,7 @@
     "react-native-compressor": "^2.0.2",
     "react-native-config": "^1.6.1",
     "react-native-create-thumbnail": "^2.2.0",
+    "react-native-fast-tflite": "^3.0.1",
     "react-native-fs": "^2.20.0",
     "react-native-gesture-handler": "^3.0.2",
     "react-native-image-picker": "^8.2.1",

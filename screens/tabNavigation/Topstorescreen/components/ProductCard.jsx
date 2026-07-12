@@ -108,13 +108,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     left: 8,
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#1FFFA5',
     borderRadius: 12,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
   discountText: {
-    color: '#fff',
+    color: '#333',
     fontSize: 12,
     fontWeight: '600',
   },
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   currentPrice: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FF6B35',
+    color: '#0cdb88',
     marginRight: 8,
   },
   originalPrice: {

@@ -1,5 +1,5 @@
 import {getallPost,SearchPost} from '../../API/post';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery,useQueryClient  } from '@tanstack/react-query';
 
 export const useGetAllPost = (
   limit,
@@ -66,55 +66,70 @@ export const useGetAllPost = (
 
 
 export const useSearchPost = (
-  { search, adminpassword, from, addcomment, filtername,category } = {},
+  { search, adminpassword, addcomment, filtername, category, size = 10 } = {},
   options = {}
 ) => {
-  console.log('🔵 [useSearchPost] Hook called with params:', {
-    search,
-    adminpassword,
-    from,
-    addcomment,
-    filtername,
-    category,
-    enabled: options.enabled,
-  });
+  console.log('🔵 [useSearchPost] hook called →', { search, addcomment, filtername, category, size, enabled: options.enabled ?? true });
 
-  const result = useQuery({
-    queryKey: ['searchPost', search, adminpassword, from, addcomment, filtername, category],
-    queryFn: async () => {
-      console.log('🚀 [useSearchPost] API CALL STARTED - Searching posts...');
-      console.log('📤 Request params:', { search, adminpassword, from, addcomment, filtername, category });
-
+  return useInfiniteQuery({
+    queryKey: ['searchPost', search, adminpassword, addcomment, filtername, category, size],
+    queryFn: async ({ pageParam = 0 }) => {
+      console.log('🚀 [useSearchPost] queryFn firing → search:', search, '| from (offset):', pageParam);
       try {
-        const response = await SearchPost({ search, adminpassword, from, addcomment, filtername, category });
-        console.log('✅ [useSearchPost] API CALL SUCCESS');
-        console.log('📥 Full Response:', response);
-        console.log('📦 Response data:', response?.data);
-        return response;
+        const response = await SearchPost({
+          search,
+          adminpassword,
+          from: pageParam,
+          addcomment,
+          filtername,
+          category,
+          size,
+        });
+        console.log('✅ [useSearchPost] raw response:', JSON.stringify(response.data, null, 2));
+        console.log('✅ [useSearchPost] posts:', response.data?.messege?.posts);
+        return response.data;
       } catch (error) {
-        console.log('❌ [useSearchPost] API CALL FAILED');
-        console.log('💥 Error:', error);
-        console.log('💥 Error response:', error?.response);
-        console.log('💥 Error message:', error?.message);
+        console.error('❌ [useSearchPost] API error → search:', search, '| error:', error.message);
         throw error;
       }
     },
+    enabled: !!search && (options.enabled ?? true),
+    refetchOnMount: true,
+    getNextPageParam: (lastPage, allPages) => {
+      const posts = lastPage?.messege?.posts || [];
+      console.log('[useSearchPost] getNextPageParam → posts returned:', posts.length, '| size:', size);
+      // if fewer posts came back than requested, there's no more data
+      if (posts.length < size) return undefined;
+      // next offset = total posts fetched so far
+      const totalFetched = allPages.reduce((sum, page) => sum + (page?.messege?.posts?.length || 0), 0);
+      return totalFetched;
+    },
+    select: (data) => {
+      const result = [];
+      const pages = data.pages;
+      console.log('[useSearchPost] select → total pages:', pages.length);
+      for (let i = 0; i < pages.length; i++) {
+        const page = pages[i];
+        const posts = page?.messege?.posts || page?.data?.messege?.posts || page?.posts;
+        console.log(`[useSearchPost] select → page ${i} posts count:`, posts?.length ?? 0);
+        if (posts && Array.isArray(posts)) {
+          for (let j = 0; j < posts.length; j++) {
+            result.push(posts[j]);
+          }
+        }
+      }
+      console.log('[useSearchPost] select → final result count:', result.length);
+      return result;
+    },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    enabled: options.enabled ?? !!search, // only run when there's an actual search term, by default
-    ...options,
+    retry: 1,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    networkMode: 'online',
+    keepPreviousData: true,
+    maxPages: 10,
   });
-
-  console.log('📊 [useSearchPost] Query State:', {
-    isLoading: result.isLoading,
-    isFetching: result.isFetching,
-    isError: result.isError,
-    isSuccess: result.isSuccess,
-    dataExists: !!result.data,
-    enabled: options.enabled,
-  });
-
-  return result;
 };
 
 
