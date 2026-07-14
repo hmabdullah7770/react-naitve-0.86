@@ -6,9 +6,10 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
-  SafeAreaView,
+  
   Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import * as Keychain from 'react-native-keychain';
 // import RBSheet from 'react-native-raw-bottom-sheet';

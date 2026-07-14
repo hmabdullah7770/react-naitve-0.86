@@ -8,9 +8,10 @@ import {
   Alert,
   Platform,
   PermissionsAndroid,
-  SafeAreaView,
+  
   Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Sound from 'react-native-nitro-sound';
 import { ModalBottomSheet } from '@swmansion/react-native-bottom-sheet';
