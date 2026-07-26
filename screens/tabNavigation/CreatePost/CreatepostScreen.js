@@ -30,11 +30,25 @@ import {useNavigation} from '@react-navigation/native';
 import {useCategoryNames} from '../../../ReactQuery/TanStackQueryHooks/useCategories';
 import sseService from '../../../services/SSEprogressbar';
 
+// video modrator importes
+
+import {
+  VideoModerationProvider,
+  useVideoModerationStatus,
+} from './context/VideoModerationContext'; // adjust path
+import {buildVideoModerationPayload} from './helper/buildVideoModerationPayload'; // adjust path
 
 const CreatepostScreenContent = () => {
   const navigation = useNavigation();
   const {clearApplied} = useCreatePostContext();
   const dispatch = useDispatch();
+
+const {
+  isProcessing: isModerationProcessing,
+  hasRejected: hasRejectedVideo,
+  hasError: hasModerationError,
+  setSelectedMediaSnapshot,
+} = useVideoModerationStatus();
 
 
   // Listen for successful post creation to reset form
@@ -83,6 +97,9 @@ const CreatepostScreenContent = () => {
 
   // Reset form to initial state
   const resetForm = useCallback(() => {
+
+setSelectedMediaSnapshot([]);
+
     console.log('Resetting form to initial state...');
 
     // Clear text inputs
@@ -178,10 +195,20 @@ const CreatepostScreenContent = () => {
   };
 
   // Callback handlers for component data updates
-  const handleMediaDataChange = useCallback(newMediaData => {
+  // const handleMediaDataChange = useCallback(newMediaData => {
+  //   setMediaData(newMediaData);
+  //   console.log('Media data updated:', newMediaData);
+  // }, []);
+
+
+const handleMediaDataChange = useCallback(
+  newMediaData => {
     setMediaData(newMediaData);
+    setSelectedMediaSnapshot(newMediaData.selectedMedia || []);
     console.log('Media data updated:', newMediaData);
-  }, []);
+  },
+  [setSelectedMediaSnapshot],
+);
 
   const handleStoreApply = useCallback(async storeData => {
     setAppliedStore(storeData);
@@ -219,6 +246,25 @@ const CreatepostScreenContent = () => {
     let postId = null;
 
 
+
+    const {videoModerationIds, blockingIssues} = buildVideoModerationPayload(
+  mediaData.selectedMedia,
+);
+
+if (blockingIssues.length > 0) {
+  const statusList = blockingIssues
+    .map(issue => {
+      const base = `Video ${issue.position}: ${issue.status}`;
+      return issue.reason ? `${base} — ${issue.reason}` : base;
+    })
+    .join('\n');
+
+  Alert.alert(
+    'Videos still being checked',
+    `Please wait for all videos to pass moderation before posting.\n\n${statusList}`,
+  );
+  return;
+}
 
     try {
        
@@ -272,6 +318,7 @@ const CreatepostScreenContent = () => {
         appliedProduct,
         appliedCategory,
         appliedSocialMedia,
+        videoModerationIds,
       };
 
       const postData = await collector.collectAllData(componentData);
@@ -684,6 +731,29 @@ const CreatepostScreenContent = () => {
     );
   };
 
+
+
+
+const isPostButtonDisabled =
+  isGeneratingThumbnails ||
+  isCreatingPost ||
+  isModerationProcessing ||
+  hasRejectedVideo ||
+  hasModerationError;
+
+const postButtonLabel = isGeneratingThumbnails
+  ? 'Generating Thumbnails...'
+  : isCreatingPost
+  ? 'Creating Post...'
+  : isModerationProcessing
+  ? 'Checking Videos...'
+  : hasRejectedVideo
+  ? 'Remove Rejected Video to Post'
+  : hasModerationError
+  ? 'Video Check Failed — Retry'
+  : 'Create Post';
+
+
   return (
     <ScrollView
       style={styles.container}
@@ -899,22 +969,15 @@ const CreatepostScreenContent = () => {
       )} */}
 
       {/* Create Post Button */}
-      <TouchableOpacity
-        style={[
-          styles.createPostButton,
-          (isGeneratingThumbnails || isCreatingPost) &&
-            styles.createPostButtonDisabled,
-        ]}
-        onPress={handleCreatePost}
-        disabled={isGeneratingThumbnails || isCreatingPost}>
-        <Text style={styles.createPostButtonText}>
-          {isGeneratingThumbnails
-            ? 'Generating Thumbnails...'
-            : isCreatingPost
-            ? 'Creating Post...'
-            : 'Create Post'}
-        </Text>
-      </TouchableOpacity>
+    <TouchableOpacity
+  style={[
+    styles.createPostButton,
+    isPostButtonDisabled && styles.createPostButtonDisabled,
+  ]}
+  onPress={handleCreatePost}
+  disabled={isPostButtonDisabled}>
+  <Text style={styles.createPostButtonText}>{postButtonLabel}</Text>
+</TouchableOpacity>
 
       {/* Reset Button - for testing and better UX
       <TouchableOpacity
@@ -1028,7 +1091,9 @@ const CreatepostScreenContent = () => {
 const CreatepostScreen = ({navigation}) => {
   return (
     <CreatePostProvider>
+      <VideoModerationProvider>
       <CreatepostScreenContent navigation={navigation} />
+      </VideoModerationProvider>
     </CreatePostProvider>
   );
 };

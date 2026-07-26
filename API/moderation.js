@@ -21,7 +21,7 @@ export const checkVideoFrames = (mediaIndex, frames) => {
     });
   });
 
-  return api.post('/moderation/check-frames', formData, {
+  return api.post('/videomoderation/check-frames', formData, {
     headers: {'Content-Type': 'multipart/form-data'},
   });
 };
@@ -33,4 +33,16 @@ export const checkVideoFrames = (mediaIndex, frames) => {
  *
  * @param {string} _id - the moderation record's MongoDB _id
  */
-export const verifyModeration = _id => api.post('/moderation/verify', {_id});
+export const verifyModeration = _id => api.post('/videomoderation/verify', {_id});
+
+
+/**
+ * Deletes a VideoModeration record — called when the user removes a
+ * video from the picker, so the DB record doesn't linger after the
+ * video itself is gone from the post being composed.
+ *
+ * @param {string} id - the moderation record's MongoDB _id
+ */
+
+export const deleteVideoModeration = id => api.delete(`/videomoderation/${id}`);
+ 

@@ -1,5 +1,5 @@
 import {useMutation} from '@tanstack/react-query';
-import {checkVideoFrames, verifyModeration} from '../../API/moderation'; // adjust path to your api file
+import {checkVideoFrames, verifyModeration,deleteVideoModeration} from '../../API/moderation'; // adjust path to your api file
 
 // CHECK video frames (nudity/moderation check via Vision API)
 export const useCheckVideoFrames = () => {
@@ -34,6 +34,23 @@ export const useVerifyModeration = () => {
     },
     onError: error => {
       console.log('❌ useVerifyModeration — error:', error);
+    },
+  });
+};
+
+
+// ✅ add this whole hook
+export const useDeleteVideoModeration = () => {
+  return useMutation({
+    mutationFn: id => {
+      console.log('🌐 useDeleteVideoModeration — calling API with id:', id);
+      return deleteVideoModeration(id);
+    },
+    onSuccess: data => {
+      console.log('✅ useDeleteVideoModeration — success:', data);
+    },
+    onError: error => {
+      console.log('❌ useDeleteVideoModeration — error:', error);
     },
   });
 };
