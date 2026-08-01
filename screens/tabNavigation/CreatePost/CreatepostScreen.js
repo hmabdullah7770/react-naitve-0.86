@@ -348,25 +348,27 @@ if (blockingIssues.length > 0) {
       }
 
       // Process FormData through ThumbnailCreationService for automatic thumbnail generation
-      console.log('Processing FormData through ThumbnailCreationService...');
-      const {default: ThumbnailCreationService} = await import(
-        './services/thumbnailservices/thumbnailCreation'
-      );
+      // console.log('Processing FormData through ThumbnailCreationService...');
+      // const {default: ThumbnailCreationService} = await import(
+      //   './services/thumbnailservices/thumbnailCreation'
+      // );
 
-      const enhancedFormData = await ThumbnailCreationService.processFormData(
-        formData,
-      );
+      // const enhancedFormData = await ThumbnailCreationService.processFormData(
+      //   formData,
+      // );
 
-      // Add postId to FormData for backend tracking
-      enhancedFormData.append('postId', postId);
+      // // Add postId to FormData for backend tracking
+      // enhancedFormData.append('postId', postId);
 
-      // Dispatch Redux action with enhanced FormData
-      console.log('Enhanced FormData ready for API call:', enhancedFormData);
+      // // Dispatch Redux action with enhanced FormData
+      // console.log('Enhanced FormData ready for API call:', enhancedFormData);
 
-      // Dispatch the action to create the post
-      dispatch(uploadpostrequest(enhancedFormData));
+      // // Dispatch the action to create the post
+      // dispatch(uploadpostrequest(enhancedFormData));
 
-
+// replace with:
+formData.append('postId', postId);
+dispatch(uploadpostrequest(formData));
      resetForm();
       
     // try {

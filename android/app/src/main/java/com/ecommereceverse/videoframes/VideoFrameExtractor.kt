@@ -7,6 +7,7 @@ import android.net.Uri
 import android.util.Base64
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.util.UUID
 
 data class FrameResult(
     val uri: String,
@@ -72,6 +73,19 @@ class VideoFrameExtractor(private val context: Context) {
             val results = mutableListOf<FrameResult>()
             val outputDirectory = getOutputDirectory(options.outputDir)
 
+            // ── Unique per-extraction-call ID ────────────────────────────────
+            // BUG FIX: without this, two DIFFERENT videos extracted back-to-back
+            // can produce IDENTICAL filenames (e.g. "frame_0_0.jpg" for every
+            // video's first frame, since timestamps are relative to each
+            // video's own start). When both write to the same shared
+            // cache/video_frames directory, the second video's file silently
+            // OVERWRITES the first video's file on disk — so a poster URI
+            // saved earlier ends up pointing at different content later.
+            // Including a unique sessionId per extractFrames() call guarantees
+            // every video's frames land in distinctly-named files, even if
+            // their timestamp/index values are identical.
+            val sessionId = UUID.randomUUID().toString().take(8)
+
             timestamps.forEachIndexed { index, timestamp ->
                 val bitmap = retriever.getFrameAtTime(
                     timestamp * 1000, // Convert ms to microseconds
@@ -91,6 +105,7 @@ class VideoFrameExtractor(private val context: Context) {
                         "base64" -> saveAsBase64(scaledBitmap, timestamp, options.quality)
                         "png" -> saveToFile(
                             scaledBitmap,
+                            sessionId,
                             timestamp,
                             index,
                             outputDirectory,
@@ -99,6 +114,7 @@ class VideoFrameExtractor(private val context: Context) {
                         )
                         else -> saveToFile(
                             scaledBitmap,
+                            sessionId,
                             timestamp,
                             index,
                             outputDirectory,
@@ -160,10 +176,16 @@ class VideoFrameExtractor(private val context: Context) {
 
                 val outputDirectory = getOutputDirectory(options.outputDir)
 
+                // Same fix as extractFrames() — guarantee a unique filename
+                // per call so back-to-back extractions from different videos
+                // never collide on disk.
+                val sessionId = UUID.randomUUID().toString().take(8)
+
                 val result = when (options.format.lowercase()) {
                     "base64" -> saveAsBase64(scaledBitmap, timeMs, options.quality)
                     "png" -> saveToFile(
                         scaledBitmap,
+                        sessionId,
                         timeMs,
                         0,
                         outputDirectory,
@@ -172,6 +194,7 @@ class VideoFrameExtractor(private val context: Context) {
                     )
                     else -> saveToFile(
                         scaledBitmap,
+                        sessionId,
                         timeMs,
                         0,
                         outputDirectory,
@@ -304,6 +327,7 @@ class VideoFrameExtractor(private val context: Context) {
 
     private fun saveToFile(
         bitmap: Bitmap,
+        sessionId: String,
         timestamp: Long,
         index: Int,
         outputDir: File,
@@ -311,7 +335,9 @@ class VideoFrameExtractor(private val context: Context) {
         quality: Int
     ): FrameResult {
         val extension = if (format == Bitmap.CompressFormat.PNG) "png" else "jpg"
-        val fileName = "frame_${timestamp}_${index}.$extension"
+        // sessionId makes this filename unique per extraction CALL (i.e. per
+        // video), not just per timestamp/index — this is the actual fix.
+        val fileName = "frame_${sessionId}_${timestamp}_${index}.$extension"
         val file = File(outputDir, fileName)
 
         file.outputStream().use { out ->

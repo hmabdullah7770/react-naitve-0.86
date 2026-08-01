@@ -31,6 +31,7 @@ class PostDataCollector {
         appliedProduct,
         appliedCategory,
         appliedSocialMedia,
+        videoModerationIds,
       } = componentData;
 
       // Collect basic text data
@@ -39,6 +40,12 @@ class PostDataCollector {
         description: description || '',
         pattern: selectedLayout || '1',
       };
+
+       // ✅ ADD
+    if (videoModerationIds && videoModerationIds.length > 0) {
+      postData.videoModerationIds = videoModerationIds;
+    }
+
 
       // Collect media data
       if (selectedMedia && selectedMedia.length > 0) {
@@ -178,6 +185,14 @@ class PostDataCollector {
           if (media.isVideo && media.thumbnail) {
             videoSettings.thumbnails[index] = media.thumbnail;
           }
+          else if (media.isVideo && media.posterUri) {
+      // ✅ ADD — fall back to the frame already extracted during moderation
+      videoSettings.thumbnails[index] = {
+        uri: media.posterUri,
+        type: 'image/jpeg',
+        fileName: `thumbnail_${index + 1}.jpg`,
+      };
+    }
           if (media.isVideo && media.autoplay !== undefined) {
             videoSettings.autoPlay = media.autoplay;
           }
@@ -208,6 +223,11 @@ class PostDataCollector {
       if (postData.socialMedia) {
         SocialMediaMapper.mapToFormData(postData.socialMedia, formData);
       }
+
+        // ✅ ADD
+    if (postData.videoModerationIds && postData.videoModerationIds.length > 0) {
+      formData.append('videoModerationIds', JSON.stringify(postData.videoModerationIds));
+    }
 
       return formData;
     } catch (error) {
