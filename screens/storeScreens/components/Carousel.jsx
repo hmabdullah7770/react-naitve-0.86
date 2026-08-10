@@ -8,6 +8,7 @@ import MaterialIcons from '@react-native-vector-icons/material-icons'
 import AddCarouselCard from './AddCarouselCard'   // ← import
 import {useDeleteStoreCarousel } from '../../../ReactQuery/TanStackQueryHooks/storee/useStoreCarousel'
 // import { Item } from 'react-native-paper/lib/typescript/components/Drawer/Drawer';
+import FastImageOrImage from '../../tabNavigation/components/feed-performance/FastImageOrImage'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_HORIZONTAL_PADDING = 17;
@@ -112,7 +113,8 @@ const slides = isStoreOwnerCarousel
       <View style={styles.slideWrapper}>
         <View style={styles.slide}>
           {hasImage && (
-            <Image
+            // <Image
+            <FastImageOrImage
               source={{ uri: item.images }}
               style={styles.backgroundImage}
               resizeMode="cover"

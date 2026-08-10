@@ -15,6 +15,7 @@ import BannerModal from './BannerModal'; // adjust path
 import { useGetAllBanner, useDeleteBanner } from '../../../ReactQuery/TanStackQueryHooks/useBanner'; // adjust path
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {OwnerContext} from '../../../context/IsOwner';
+import FastImageOrImage from './feed-performance/FastImageOrImage'
 
 const { width } = Dimensions.get('window');
 const ITEM_WIDTH = width - 60;
@@ -106,7 +107,8 @@ return(
         },
       ]}
     >
-      <Image
+      {/* <Image */}
+      <FastImageOrImage
         source={{ uri: item.bannerImage }}
         style={styles.bannerImage}
         resizeMode="cover"
@@ -148,7 +150,8 @@ return(
       )}
 
       <View style={styles.ownerContainer}>
-        <Image
+        {/* <Image */}
+        <FastImageOrImage
           source={{ uri: item.ownerDetails.avatar }}
           style={styles.ownerAvatar}
         />

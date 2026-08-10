@@ -4,6 +4,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import {useDeleteProduct}  from '../../../ReactQuery/TanStackQueryHooks/storee/useStoreProducts'
 import { useNavigation } from '@react-navigation/native';
 import ProductDeleteLoader from './ProductDeleteLoader';
+import FastImageOrImage from '../../tabNavigation/components/feed-performance/FastImageOrImage'
 
 const ProductCard = ({ item, isStoreOwnerProduct }) => {
   const navigation = useNavigation();
@@ -72,7 +73,8 @@ const handledeleteProduct = async () => {
         <TouchableOpacity
           onPress={handlePress}
         >
-          <Image
+          {/* <Image */}
+          <FastImageOrImage
             source={{ uri: activeImageUri }}
             style={styles.image}
             resizeMode="cover"

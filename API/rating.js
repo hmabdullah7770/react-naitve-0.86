@@ -1,23 +1,29 @@
 // import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/apiservice'
 
+import { compressData } from '../services/gzipService';
 
+ 
 
+api.post(`/ratings/add`, { posts });
 
+// export const addrating = (posts) =>{
 
-// const accessToken = await Keychain.getGenericPassword({ service: 'accessToken' }); // Assuming 'accessToken' is the service name you used for the access token
-// const refreshToken = await Keychain.getGenericPassword({ service: 'refreshToken' });
+//    // 1. Use the separate gzip service to compress the data
+//   const compressedData = compressData({ posts });
 
+//   return api.post(`/ratings/add`,  compressedData,{
 
-
-
-
-// export const profile = username =>
-//   api.get('/users/f/:username', {
-//     params: {
-//       username,
+//     headers: {
+//       'Content-Encoding': 'gzip', // Tells Node.js to trigger your middleware
 //     },
-//   });
 
-export const addrating = (posts) =>
-  api.post(`/ratings/add`, { posts });
+//     // 3. Tell Axios to NOT turn the binary data into a JSON string
+//     transformRequest: [(data, headers) => {
+//       // We must delete 'Content-Type' because this is now binary data, 
+//       // not 'application/json'
+//       delete headers['Content-Type']; 
+//       return data; 
+//     }]
+//   });
+// }

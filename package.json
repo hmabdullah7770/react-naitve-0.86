@@ -2,7 +2,7 @@
   "name": "ecommereceverse",
   "version": "0.0.1",
   "private": true,
-"codegenConfig": {
+  "codegenConfig": {
     "name": "VideoFramesSpec",
     "type": "modules",
     "jsSrcsDir": "native",
@@ -10,7 +10,6 @@
       "javaPackageName": "com.ecommereceverse.videoframes"
     }
   },
-
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios",
@@ -48,6 +47,7 @@
     "axios": "^1.18.0",
     "date-fns": "^4.4.0",
     "formik": "^2.4.9",
+    "pako": "^3.0.1",
     "react": "19.2.3",
     "react-native": "0.86.0",
     "react-native-aes-crypto": "^3.3.0",
@@ -63,6 +63,7 @@
     "react-native-nitro-modules": "^0.35.9",
     "react-native-nitro-sound": "^0.2.15",
     "react-native-otp-textinput": "^1.1.7",
+    "react-native-pager-view": "^8.0.4",
     "react-native-paper": "^5.15.3",
     "react-native-reanimated": "^4.4.1",
     "react-native-safe-area-context": "^5.8.0",
