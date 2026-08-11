@@ -1,11 +1,29 @@
 // import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/apiservice'
 
-import { compressData } from '../services/gzipService';
+
+import { compressData , compressToBase64} from '../services/gzipService';
 
  
 
-api.post(`/ratings/add`, { posts });
+// api.post(`/ratings/add`, { posts });
+
+
+
+export const addrating = (posts) => {
+  const base64Body = compressToBase64({ posts });
+
+  return api.post(`/ratings/add`, base64Body, {
+    headers: {
+      'Content-Encoding': 'gzip-base64',
+      'Content-Type': 'text/plain',
+    },
+    transformRequest: [(data) => data],
+  });
+};
+
+
+
 
 // export const addrating = (posts) =>{
 
