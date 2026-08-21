@@ -12,7 +12,7 @@ import {
     useVideoFrames,
     extractFrameAtTime,
     getVideoMetadata,
-} from './index';
+} from '../index';
 
 // ─────────────────────────────────────────────
 // Example 1: Hook Usage

@@ -4,11 +4,25 @@ export {
     extractFrameAtTime,
     clearFramesCache,
     useVideoFrames,
-} from './VideoFrames';
+} from './videoframes/VideoFrames';
 
 export type {
     VideoMetadata,
     FrameResult,
     ExtractOptions,
     ProgressEvent,
-} from './VideoFrames';
+} from './videoframes/VideoFrames';
+
+
+export {
+    checkForUpdate,
+    syncUpdate,
+    markBootSuccess,
+    getAppVersion,
+    getBundleId,
+} from './ota/OtaClient';
+
+export type {
+    OtaClientConfig,
+    UpdateCheckResult,
+} from './ota/OtaClient';

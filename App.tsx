@@ -31,7 +31,7 @@ import { tokencheck } from './Redux/action/auth';
 import { BottomSheetProvider } from '@swmansion/react-native-bottom-sheet';
 
 import { setupNotificationListeners, listenTokenRefresh } from './services/notificationService'
-
+import { syncUpdate, markBootSuccess, getBundleId } from './native/index';
 
 // Add this to your App.js
 
@@ -39,7 +39,12 @@ import { setupNotificationListeners, listenTokenRefresh } from './services/notif
 
 
 
-
+const OTA_CONFIG = {
+  baseURL: 'https://hrgzqzbozukznelddalc.supabase.co/functions/v1/smooth-task',
+  authToken: 'sb_publishable_9ht19px_e4b-W10WWVuf3w_IEZUbenO',
+  channel: 'production',
+};
+ 
 
 
 
@@ -173,7 +178,32 @@ const App = () => {
 
 
 
+//  failed boot
+  // and triggers rollback on next launch.
+useEffect(() => {
+  console.error('[OTA] useEffect starting, about to call syncUpdate');
+    console.error('[OTA] 1. effect starting');
+  try {
+    console.error('[OTA] 2. current bundleId:', getBundleId());
+  } catch (e) {
+    console.error('[OTA] 2-FAIL getBundleId threw:', e);
+  }
 
+  
+  //  console.error('[OTA] current bundleId:', getBundleId());
+  const bootTimer = setTimeout(() => {
+    markBootSuccess();
+  }, 3000);
+
+  syncUpdate(OTA_CONFIG).catch((err) => {
+    console.warn('[OTA] sync failed:', err);
+  });
+
+  return () => clearTimeout(bootTimer);
+}, []);
+  // This state and console log seem unused based on the current logic.
+  // If you're not using this state, you can remove it.
+ 
 
 
 const {isAuthenticated,user, error} = useSelector((state: RootState) => state.auth);

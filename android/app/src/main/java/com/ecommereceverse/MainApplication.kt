@@ -7,6 +7,8 @@ import com.facebook.react.ReactHost
 import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.ecommereceverse.videoframes.VideoFramesPackage 
+import com.ecommereceverse.videoframes.OtaManager
+import com.ecommereceverse.videoframes.OtaPackage
 
 class MainApplication : Application(), ReactApplication {
 
@@ -16,9 +18,11 @@ class MainApplication : Application(), ReactApplication {
       packageList =
         PackageList(this).packages.apply {
           add(VideoFramesPackage())  // ✅ Actually add it here
+           add(OtaPackage())
           // Packages that cannot be autolinked yet can be added manually here, for example:
           // add(MyReactNativePackage())
         },
+        jsBundleFilePath = OtaManager.getJSBundleFile(applicationContext),
     )
   }
 

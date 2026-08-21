@@ -1,5 +1,5 @@
 import RNFS from 'react-native-fs';
-import {extractFrames, getVideoMetadata} from '../../../../native/VideoFrames'; // adjust path
+import {extractFrames, getVideoMetadata} from '../../../../native/videoframes/VideoFrames'; // adjust path
 import {useCheckVideoFrames, useDeleteVideoModeration} from '../../../../ReactQuery/TanStackQueryHooks/useModerationApi'; // adjust path
 
 // Tune these to match your Vision API budget / latency requirements.
