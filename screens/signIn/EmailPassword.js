@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     marginBottom: 90,
   },
   button: {
-    backgroundColor: 'rgb(20, 238, 151)', // iOS blue colorrgba(4, 248, 150, 0.77)  #f9213f
+    backgroundColor: 'rgb(60, 238, 20)', // iOS blue colorrgba(4, 248, 150, 0.77)  #f9213f
     padding: 11,
     borderRadius: 10,
     width: '80%',

@@ -101,6 +101,7 @@ const Textfield = ({
      </View>
       <TextInput
         placeholder={placeholder}
+        placeholderTextColor="#000000"   // ← add this line
         style={[styles.input, { marginLeft: dynamicStyles.padding }]}
         onChangeText={onChangeText}
         onFocus={handleFocus}
