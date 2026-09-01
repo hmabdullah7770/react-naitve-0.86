@@ -506,28 +506,32 @@ function* LogoutSaga() {
      // Should be - CORRECT
 
 // ✅ This clears the EXACT cache the UI is using
+
       yield call([queryClient, 'clear']);
 
   yield call([Keychain, 'resetGenericPassword'], { service: 'accessToken' });
   yield call([Keychain, 'resetGenericPassword'], { service: 'refreshToken' });
   yield call([Keychain, 'resetGenericPassword'], { service: 'storeId' });
-  yield call(Keychain.resetGenericPassword, { service: 'userId' });
+  // yield call(Keychain.resetGenericPassword, { service: 'userId' });
+  yield call([Keychain, 'resetGenericPassword'], { service: 'userId' }); 
 
    // ✅ Clear AsyncStorage
-    yield call(AsyncStorage.multiRemove, [
-      'whatsappId', 'facebookId', 'instagramId', 'storeLinkUrl', 'avatar'
-    ]);
-
+    yield call([AsyncStorage, 'removeItem'], 'whatsappId');
+yield call([AsyncStorage, 'removeItem'], 'facebookId');
+yield call([AsyncStorage, 'removeItem'], 'instagramId');
+yield call([AsyncStorage, 'removeItem'], 'storeLinkUrl');
+yield call([AsyncStorage, 'removeItem'], 'avatar');
+        // Clear store after successful logout
+      yield put(actions.clearstore());
   yield put(
         actions.logoutsuccessful([
-          response.data.message,
+          response.data.messege,
           'You are logged out',
           // EncryptedStorage.clear('azure_token')
         ]),
       );
 
-            // Clear store after successful logout
-      yield put(actions.clearstore());
+    
     }
 
   // else if(response.status === 401 && response.data.error === 'jwt expired'){

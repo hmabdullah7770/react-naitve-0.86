@@ -3,7 +3,9 @@ import { View } from 'react-native';
 import { Button, Snackbar } from 'react-native-paper';
 import { StyleSheet, Text, TouchableOpacity} from 'react-native';
 
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
+// import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+
 import {SnackbarContext}  from '../context/Snackbar';
 import { useContext } from 'react';
 
@@ -26,14 +28,14 @@ const PaperSnackbar = () => {
           <Text style={styles.Snackbar}>
           {
            type === 'error' ? (
-            <FontAwesome name="times-circle" size={25} color="red" solid={true}/>
+            <FontAwesome6 name="times-circle" size={25} color="red" solid={true}/>
            )
             : type === 'success' ? (
-              <FontAwesome name="check-circle" size={25} color="lightgreen" solid={true}/>
+              <FontAwesome6 name="check-circle" size={25} color="lightgreen" solid={true}/>
             )
             : type === 'info' ? (
 
-              <FontAwesome name="info-circle" size={25} color="lightblue" solid={true}/>
+              <FontAwesome6 name="info-circle" size={25} color="lightblue" solid={true}/>
 
           )
           : null

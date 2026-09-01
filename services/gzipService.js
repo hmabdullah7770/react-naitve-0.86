@@ -1,5 +1,5 @@
 // services/gzipService.js
-import pako from 'pako';
+import * as pako from 'pako';
 import { uint8ToBase64Fast } from '../utils/base64';
 
 /**
