@@ -137,11 +137,40 @@ export default function useVideoModeration(setSelectedMedia) {
         pendingFrameUris: [],
       });
     } catch (error) {
-      console.error('Video moderation failed:', error);
+     
+      console.error('Video moderation failed — FULL ERROR DETAILS:', {
+
+
+      message: error.message,
+    code: error.code,                    // e.g. 'ECONNABORTED', 'ERR_NETWORK'
+    name: error.name,
+
+    // Server response (only exists if server actually responded)
+    responseStatus: error.response?.status,
+    responseStatusText: error.response?.statusText,
+    responseData: error.response?.data,   // the actual server error body/message
+    responseHeaders: error.response?.headers,
+
+    // Request that was sent (exists even if no response came back)
+    requestExists: !!error.request,
+    requestUrl: error.config?.url,
+    requestMethod: error.config?.method,
+    requestBaseURL: error.config?.baseURL,
+    requestTimeout: error.config?.timeout,
+    requestHeaders: error.config?.headers,
+
+    // Axios' own classification
+    isAxiosError: error.isAxiosError,
+    toJSON: error.toJSON ? error.toJSON() : null, // Axios' built-in full dump
+   });
+      // fix some time axios give us the error
+      const isNetworkError = error.message === 'Network Error' || !error.response;
       updateMediaAt(mediaIndex, videoUri, {
         moderationStatus: 'error',
         moderationError: true,
         pendingFrameUris: [],
+      // fix some time axios give us the network error
+        moderationCanRetry: isNetworkError, // only offer retry for transient/network failures
       });
     } finally {
       // Frames only exist to be uploaded for moderation — once the

@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, Image, ActivityIndicator, StyleSheet} from 'react-native';
+import {View, Image, ActivityIndicator, StyleSheet,Text,TouchableOpacity} from 'react-native';
 
 /**
  * Renders the visual content of a single media slot:
@@ -20,6 +20,7 @@ const MediaThumbnail = ({
   VideoThumbnailOverlay,
   onVideoPress,
   imageStyle,
+  onRetryModeration, // 👈 new prop — pass moderateVideo(uri, index) from the parent
 }) => {
   const customThumbnail = videoSettings.thumbnails[index];
 
@@ -28,6 +29,8 @@ const MediaThumbnail = ({
   const displayUri = media.isVideo
     ? customThumbnail?.uri || media.posterUri || null
     : media.uri;
+
+      const isModerationError = media.isVideo && media.moderationStatus === 'error';
 
   return (
     <>
@@ -49,13 +52,30 @@ const MediaThumbnail = ({
         </View>
       )}
 
-      {media.isVideo && !media.thumbnailExtracting && (
+      {media.isVideo && !media.thumbnailExtracting && !isModerationError && (
         <VideoThumbnailOverlay
           videoIndex={index}
           thumbnail={customThumbnail}
           onPress={onVideoPress}
         />
       )}
+
+      {isModerationError && (
+        <View style={styles.errorOverlay}>
+          <Text style={styles.errorText}>
+            {media.moderationCanRetry ? 'Failed to check video' : 'Video rejected'}
+          </Text>
+          {media.moderationCanRetry && (
+            <TouchableOpacity
+              onPress={() => onRetryModeration?.(media.uri, index)}
+              style={styles.retryButton}
+            >
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
     </>
   );
 };
@@ -73,6 +93,30 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.35)',
     justifyContent: 'center',
     alignItems: 'center',
+  },errorOverlay: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 8,
+  },
+  errorText: {
+    color: '#fff',
+    fontSize: 12,
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  retryButton: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  retryButtonText: {
+    color: '#000',
+    fontWeight: '600',
+    fontSize: 12,
   },
 });
 

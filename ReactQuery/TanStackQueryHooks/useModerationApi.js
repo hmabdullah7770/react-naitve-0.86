@@ -13,6 +13,15 @@ export const useCheckVideoFrames = () => {
       );
       return checkVideoFrames(mediaIndex, frames);
     },
+
+    // 👇 this is the fix — React Query handles retry natively
+    retry: (failureCount, error) => {
+      const isRetryable = error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED' || !error.response;
+      if (!isRetryable) return false;       // don't retry real server errors (4xx/5xx)
+      return failureCount < 3;               // retry up to 3 times for transport failures
+    },
+    retryDelay: attempt => Math.min(500 * 2 ** attempt, 5000) + Math.random() * 200, // exponential backoff + jitter
+
     onSuccess: data => {
       console.log('✅ useCheckVideoFrames — success:', data);
     },

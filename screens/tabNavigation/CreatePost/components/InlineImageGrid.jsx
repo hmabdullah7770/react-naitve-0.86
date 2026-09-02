@@ -33,7 +33,7 @@ const InlineImageGrid = React.memo(
 
     // Extracts frames spread across each video (for thumbnail + nudity
     // moderation via backend + Google Vision) right after upload
-    const {moderateNewMedia, cleanupMediaFrames} = useVideoModeration(
+    const {moderateVideo, moderateNewMedia, cleanupMediaFrames} = useVideoModeration(
       setSelectedMedia,
     );
 
@@ -765,6 +765,7 @@ const InlineImageGrid = React.memo(
               }}
               VideoThumbnailOverlay={VideoThumbnailOverlay}
               onVideoPress={handleVideoClick}
+              onRetryModeration={moderateVideo}   
             />
             <TouchableOpacity
               style={styles.removeButton}
@@ -857,6 +858,7 @@ const InlineImageGrid = React.memo(
                 }}
                 VideoThumbnailOverlay={VideoThumbnailOverlay}
                 onVideoPress={handleVideoClick}
+                onRetryModeration={moderateVideo}   
               />
               <TouchableOpacity
                 style={styles.removeButton}
@@ -919,6 +921,7 @@ const InlineImageGrid = React.memo(
                 imageStyle={styles.mediaImage}
                 VideoThumbnailOverlay={VideoThumbnailOverlay}
                 onVideoPress={handleVideoClick}
+                 onRetryModeration={moderateVideo} 
               />
               <TouchableOpacity
                 style={styles.removeButton}
@@ -971,6 +974,7 @@ const InlineImageGrid = React.memo(
                 imageStyle={styles.mediaImage}
                 VideoThumbnailOverlay={VideoThumbnailOverlay}
                 onVideoPress={handleVideoClick}
+                 onRetryModeration={moderateVideo} 
               />
               <TouchableOpacity
                 style={styles.removeButton}
@@ -1011,6 +1015,7 @@ const InlineImageGrid = React.memo(
                       imageStyle={styles.mediaImage}
                       VideoThumbnailOverlay={VideoThumbnailOverlay}
                       onVideoPress={handleVideoClick}
+                       onRetryModeration={moderateVideo} 
                     />
                     <TouchableOpacity
                       style={styles.removeButton}
@@ -1076,6 +1081,7 @@ const InlineImageGrid = React.memo(
                 imageStyle={styles.mediaImage}
                 VideoThumbnailOverlay={VideoThumbnailOverlay}
                 onVideoPress={handleVideoClick}
+                 onRetryModeration={moderateVideo} 
               />
               <TouchableOpacity
                 style={styles.removeButton}
