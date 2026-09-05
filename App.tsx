@@ -1,7 +1,7 @@
 import 'react-native-gesture-handler';
 import { StyleSheet, Text, View } from 'react-native';
 import React from 'react';
-import { useState } from 'react';
+import { useState,useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import  AppScreens   from  './Stack/AppScreens';
@@ -32,6 +32,10 @@ import { BottomSheetProvider } from '@swmansion/react-native-bottom-sheet';
 
 import { setupNotificationListeners, listenTokenRefresh } from './services/notificationService'
 import { syncUpdate, markBootSuccess, getBundleId } from './native/index';
+import { getDeviceRegistrationPayload } from './services/deviceInfoService';
+import { useStoreDeviceInfo } from './ReactQuery/TanStackQueryHooks/useDeviceInfo';
+import { useLinkUserToDevice } from './ReactQuery/TanStackQueryHooks/useDeviceInfo';
+import DeviceInfo from 'react-native-device-info';
 
 // Add this to your App.js
 
@@ -64,6 +68,9 @@ interface RootState {
   };
   // Add other slices of your state here
 }
+
+
+
 
 export const queryClient = new QueryClient();
 
@@ -111,8 +118,15 @@ const App = () => {
 
   const dispatch = useDispatch();
 
+    // --- ADD THIS: device registration mutation ---
+  const { mutate: storeDevice } = useStoreDeviceInfo();
+  const { mutate: linkUser } = useLinkUserToDevice();
 //   const getToken = async () => {
 
+ // Holds the MongoDB _id of this device's document, once /store responds
+  const [deviceMongoId, setDeviceMongoId] = useState<string | null>(null);
+  // Prevents calling linkUser more than once per app session
+  const hasLinkedRef = useRef(false);
 //     const accessToken = await Keychain.getGenericPassword('accessToken');
 //     console.log('Access Token:', accessToken);
 //     return accessToken
@@ -177,6 +191,8 @@ const App = () => {
 
 
 
+  
+
 
 //  failed boot
   // and triggers rollback on next launch.
@@ -211,6 +227,51 @@ console.log('Is authenticated:',isAuthenticated);
 
 
 console.log('User in App.tsx :', user);
+
+
+
+
+
+
+  // Register device — runs once on every app boot, auth or not
+  useEffect(() => {
+    const registerDevice = async () => {
+      try {
+        const payload = await getDeviceRegistrationPayload(isAuthenticated);
+
+        storeDevice(payload, {
+          onSuccess: (response: any) => {
+            // Adjust this path if your ApiResponse shape differs
+            const mongoId = response?.data?.data?._id;
+            if (mongoId) {
+              setDeviceMongoId(mongoId);
+            }
+          },
+        });
+      } catch (error) {
+        console.error('Device registration failed:', error);
+      }
+    };
+
+    registerDevice();
+  }, []);
+
+// Link user to device — runs only when the user becomes authenticated
+
+// Link user to device — fires once BOTH conditions are true:
+  //   1. user is authenticated
+  //   2. we have the device's Mongo _id back from /store
+  useEffect(() => {
+    if (!isAuthenticated || !deviceMongoId || hasLinkedRef.current) return;
+
+    hasLinkedRef.current = true; // guard against double-calls on re-renders
+
+    linkUser(deviceMongoId, {
+      onError: () => {
+        hasLinkedRef.current = false; // allow retry if it failed
+      },
+    });
+  }, [isAuthenticated, deviceMongoId]);
 
 
 // const getToken = async () => {
