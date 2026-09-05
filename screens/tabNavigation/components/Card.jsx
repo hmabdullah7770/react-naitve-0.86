@@ -4,9 +4,6 @@ import {
   Text,
   View,
   TouchableOpacity,
-  Dimensions,
-  Linking,
-  TouchableWithoutFeedback,
   Image,
 } from 'react-native';
 import FastImageOrImage from './feed-performance/FastImageOrImage';
@@ -16,13 +13,11 @@ import ProfileHeader from './ProfileHeader';
 import SocialDropdown from './SocialDropdown';
 import Video from 'react-native-video';
 import Icon from '@react-native-vector-icons/ionicons';
-import * as Keychain from 'react-native-keychain';
-import MoreItemModal from './MoreItemModal'
+import MoreItemModal from './MoreItemModal';
 import { useNavigation } from '@react-navigation/native';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import PostDeletingLoader from './Postdeletingloader';
 import RemoveFavouretLoader from './Removefavouretloader';
-
 
 // ✅ Text Post Component
 const TextPost = memo(({ description }) => (
@@ -32,19 +27,20 @@ const TextPost = memo(({ description }) => (
 ));
 TextPost.displayName = 'TextPost';
 
-
-//hls cloudinary  configration
+// hls cloudinary configuration
 
 // ✅ Helper function to detect video type
 const isVideoUrl = (url) => {
   if (!url) return false;
   const lowerUrl = url.toLowerCase();
-  return lowerUrl.includes('.mp4') ||
-         lowerUrl.includes('.m3u8') ||
-         lowerUrl.includes('.hls') ||
-         lowerUrl.includes('/video/') ||  // Cloudinary video path
-         lowerUrl.includes('f_auto') ||   // Cloudinary auto format
-         lowerUrl.includes('vc_auto');    // Cloudinary video codec
+  return (
+    lowerUrl.includes('.mp4') ||
+    lowerUrl.includes('.m3u8') ||
+    lowerUrl.includes('.hls') ||
+    lowerUrl.includes('/video/') || // Cloudinary video path
+    lowerUrl.includes('f_auto') || // Cloudinary auto format
+    lowerUrl.includes('vc_auto') // Cloudinary video codec
+  );
 };
 
 // ✅ Helper to determine if HLS stream
@@ -54,8 +50,7 @@ const isHLSStream = (url) => {
   return lowerUrl.includes('.m3u8') || lowerUrl.includes('/hls/');
 };
 
-
-// ✅ FIXED: Video Player
+// ✅ Video Player
 // - Native <Video> mounts ONCE the card has ever been playable, and stays
 //   mounted afterwards. We toggle `paused`/`muted` (cheap) instead of
 //   mount/unmount (expensive) as the card scrolls in and out of view.
@@ -65,464 +60,336 @@ const isHLSStream = (url) => {
 // - Thumbnail and Video both have explicit zIndex + elevation so Android's
 //   native surface can't visually punch through the thumbnail during the
 //   brief window before the first frame is ready.
-const VideoPlayer = memo(({
-  media,
-  style,
-  thumbnail,
-  shouldAutoplay,
-  isPlayable,
-  hasAudio,
-  videoKey
-}) => {
-  const [isPaused, setIsPaused] = useState(true);
-  const [isMuted, setIsMuted] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(false); // ✅ Track actual playback state
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-  const videoRef = useRef(null);
+// - Audio is exclusive per Card: `canHaveAudio` says this video CAN carry
+//   sound, `isAudioActive` says it currently OWNS the shared audio slot
+//   (owned in the parent Card via `activeAudioUrl`), and `onRequestActiveAudio`
+//   lets the user claim/release that slot by tapping this video's icon.
+const VideoPlayer = memo(
+  ({
+    media,
+    style,
+    thumbnail,
+    shouldAutoplay,
+    isPlayable,
+    canHaveAudio,
+    isAudioActive,
+    onRequestActiveAudio,
+    videoKey,
+  }) => {
+    const [isPaused, setIsPaused] = useState(true);
+    const [isPlaying, setIsPlaying] = useState(false); // ✅ Track actual playback state
+    const [hasError, setHasError] = useState(false);
+    const videoRef = useRef(null);
 
-  // ✅ Tracks whether this card has EVER become playable. Once true, the
-  // native <Video> view stays mounted for the lifetime of this component
-  // instance (i.e. for as long as FlashList keeps this row recycled with
-  // this item), and we control playback purely via `paused`/`muted`.
-  const hasEverBeenPlayableRef = useRef(false);
-  if (isPlayable && !hasEverBeenPlayableRef.current) {
-    hasEverBeenPlayableRef.current = true;
-  }
+    // ✅ Muted whenever this video isn't the group's currently active one
+    const isMuted = !canHaveAudio || !isAudioActive;
 
-  //hls coudinary
-  // ✅ Determine if this is an HLS stream
-  const isHLS = useMemo(() => isHLSStream(media?.url), [media?.url]);
-
-  // ✅ Logging only — pulled into useEffectEvent so it doesn't influence
-  // when the playback-control effect below actually re-runs. videoKey/isHLS
-  // are only needed for the log message, not for the playback decision.
-  const logPlaybackChange = useEffectEvent((playing, key, hls) => {
-    if (playing) {
-      console.log('▶️ VIDEO PLAYBACK START:', key, hls ? '(HLS)' : '(MP4)');
-    } else {
-      console.log('⏸️ VIDEO PLAYBACK STOP:', key);
+    // ✅ Tracks whether this card has EVER become playable. Once true, the
+    // native <Video> view stays mounted for the lifetime of this component
+    // instance (i.e. for as long as FlashList keeps this row recycled with
+    // this item), and we control playback purely via `paused`/`muted`.
+    const hasEverBeenPlayableRef = useRef(false);
+    if (isPlayable && !hasEverBeenPlayableRef.current) {
+      hasEverBeenPlayableRef.current = true;
     }
-  });
 
-  // ✅ Control video playback — dependency array now exactly matches what
-  // actually drives the pause/mute decision.
-  useEffect(() => {
-    const playing = isPlayable && shouldAutoplay;
-    if (playing) {
-      setIsPaused(false);
-      if (hasAudio) {
-        setIsMuted(false);
+    // hls cloudinary
+    // ✅ Determine if this is an HLS stream
+    const isHLS = useMemo(() => isHLSStream(media?.url), [media?.url]);
+
+    // ✅ Logging only — pulled into useEffectEvent so it doesn't influence
+    // when the playback-control effect below actually re-runs.
+    const logPlaybackChange = useEffectEvent((playing, key, hls) => {
+      if (playing) {
+        console.log('▶️ VIDEO PLAYBACK START:', key, hls ? '(HLS)' : '(MP4)');
+      } else {
+        console.log('⏸️ VIDEO PLAYBACK STOP:', key);
       }
-    } else {
-      setIsPaused(true);
-      setIsPlaying(false); // ✅ Reset playing state so thumbnail covers next activation
-      setIsMuted(true);
-    }
-    logPlaybackChange(playing, videoKey, isHLS);
-  }, [isPlayable, shouldAutoplay, hasAudio]);
+    });
 
-  // hls coudinary
-  const handleLoad = useCallback(() => {
-    console.log('✅ VIDEO LOADED:', videoKey);
-    setIsLoading(false);
-    setHasError(false);
-  }, [videoKey]);
+    // ✅ Control video playback — dependency array matches what actually
+    // drives the pause decision.
+    useEffect(() => {
+      const playing = isPlayable && shouldAutoplay;
+      if (playing) {
+        setIsPaused(false);
+      } else {
+        setIsPaused(true);
+        setIsPlaying(false); // ✅ Reset playing state so thumbnail covers next activation
+      }
+      logPlaybackChange(playing, videoKey, isHLS);
+    }, [isPlayable, shouldAutoplay]);
 
-  // ✅ First real decoded frame is ready — safe to hide the thumbnail now.
-  // This fires earlier and more reliably than onProgress, which can lag
-  // behind the first visible frame depending on buffering.
-  const handleReadyForDisplay = useCallback(() => {
-    setIsPlaying(true);
-  }, []);
+    // hls cloudinary
+    const handleLoad = useCallback(() => {
+      console.log('✅ VIDEO LOADED:', videoKey);
+      setHasError(false);
+    }, [videoKey]);
 
-  // ✅ Kept as a secondary signal in case onReadyForDisplay isn't fired by
-  // the installed react-native-video version on a given platform.
-  const handleProgress = useCallback(() => {
-    if (!isPaused && !isPlaying) {
+    // ✅ First real decoded frame is ready — safe to hide the thumbnail now.
+    // This fires earlier and more reliably than onProgress, which can lag
+    // behind the first visible frame depending on buffering.
+    const handleReadyForDisplay = useCallback(() => {
       setIsPlaying(true);
-    }
-  }, [isPaused, isPlaying]);
+    }, []);
 
-  const handleDoubleTap = useCallback(() => {
-    if (!shouldAutoplay) {
-      setIsPaused(prev => !prev);
-    }
-  }, [shouldAutoplay]);
+    // ✅ Kept as a secondary signal in case onReadyForDisplay isn't fired by
+    // the installed react-native-video version on a given platform.
+    const handleProgress = useCallback(() => {
+      if (!isPaused && !isPlaying) {
+        setIsPlaying(true);
+      }
+    }, [isPaused, isPlaying]);
 
-  const toggleMute = useCallback((e) => {
-    e.stopPropagation();
-    setIsMuted(prev => !prev);
-  }, []);
+    // ✅ Tapping this video's mute icon claims (or releases) the shared
+    // audio slot in the parent Card — this is what makes audio exclusive.
+    const toggleMute = useCallback(
+      (e) => {
+        e.stopPropagation();
+        onRequestActiveAudio(media?.url);
+      },
+      [onRequestActiveAudio, media?.url]
+    );
 
-  const handleError = useCallback((error) => {
-    console.error('❌ VIDEO ERROR:', videoKey, error);
-    setIsPaused(true);
-    setIsPlaying(false);
-    setIsLoading(false);
-    setHasError(true);
-  }, [videoKey]);
+    const handleError = useCallback(
+      (error) => {
+        console.error('❌ VIDEO ERROR:', videoKey, error);
+        setIsPaused(true);
+        setIsPlaying(false);
+        setHasError(true);
+      },
+      [videoKey]
+    );
 
-  // ✅ Cleanup on unmount (e.g. item leaves the recycle pool entirely)
-  useEffect(() => {
-    return () => {
-      setIsPaused(true);
+    // ✅ Cleanup on unmount (e.g. item leaves the recycle pool entirely)
+    useEffect(() => {
+      return () => {
+        setIsPaused(true);
+        setIsPlaying(false);
+      };
+    }, [videoKey]);
+
+    // ✅ Build video source with type for HLS
+    const videoSource = useMemo(() => {
+      const source = { uri: media?.url };
+      // ✅ CRITICAL: Specify type for HLS streams
+      if (isHLS) {
+        source.type = 'm3u8';
+      }
+      return source;
+    }, [media?.url, isHLS]);
+
+    // Reset the "ready" / error state if the underlying media changes under us
+    // (e.g. FlashList recycled this component instance for a different item).
+    useEffect(() => {
       setIsPlaying(false);
-    };
-  }, [videoKey]);
+      setHasError(false);
+      hasEverBeenPlayableRef.current = isPlayable;
+    }, [media?.url]);
 
-  // ✅ Build video source with type for HLS
-  const videoSource = useMemo(() => {
-    const source = { uri: media?.url };
-
-    // ✅ CRITICAL: Specify type for HLS streams
-    if (isHLS) {
-      source.type = 'm3u8';
-      // Alternative: source.type = 'application/x-mpegURL';
-    }
-
-    return source;
-  }, [media?.url, isHLS]);
-
-  // Reset the "ready" / error state if the underlying media changes under us
-  // (e.g. FlashList recycled this component instance for a different item).
-  useEffect(() => {
-    setIsPlaying(false);
-    setIsLoading(true);
-    setHasError(false);
-    hasEverBeenPlayableRef.current = isPlayable;
-  }, [media?.url]);
-
-  return (
-    <View style={style}>
-      <View style={styles.videoWrapper}>
-        {/* ✅ CRITICAL: Show thumbnail UNTIL the first real frame is ready */}
-        {!isPlaying && thumbnail && (
-          <Image
-            source={{ uri: thumbnail }}
-            style={styles.videoThumbnail}
-            resizeMode="cover"
-          />
-        )}
-
-        {/* ✅ Mount once this card has ever been playable, then KEEP mounted.
-            Playback itself is controlled via `paused`, not via mounting. */}
-        {hasEverBeenPlayableRef.current && (
-          <Video
-            ref={videoRef}
-            source={videoSource}
-            style={styles.video}
-            controls={false}
-            paused={isPaused}
-            muted={isMuted}
-            resizeMode="cover"
-            repeat={true}
-            playInBackground={false}
-            playWhenInactive={false}
-            onLoad={handleLoad}
-            onProgress={handleProgress}
-            onReadyForDisplay={handleReadyForDisplay}
-            onError={handleError}
-            ignoreSilentSwitch="ignore"
-            // ✅ Adjusted buffer config for HLS
-            bufferConfig={{
-              minBufferMs: isHLS ? 15000 : 10000,
-              maxBufferMs: isHLS ? 50000 : 30000,
-              bufferForPlaybackMs: isHLS ? 2500 : 1500,
-              bufferForPlaybackAfterRebufferMs: isHLS ? 5000 : 3000
-            }}
-            // ✅ Additional props for HLS on Android
-            useTextureView={true}
-            disableFocus={true}
-          />
-        )}
-
-        {/* ✅ Play Button */}
-        {!isPlaying && isPaused && !shouldAutoplay && !hasError && (
-          <View style={styles.playButtonOverlay}>
-            <View style={styles.playButtonCircle}>
-              <Icon name="play" size={40} color="#fff" />
-            </View>
-          </View>
-        )}
-
-        {/* ✅ Error fallback — shown instead of a silently blank video area */}
-        {hasError && (
-          <View style={styles.videoErrorOverlay}>
-            <Icon name="alert-circle-outline" size={32} color="#fff" />
-            <Text style={styles.videoErrorText}>Couldn't load video</Text>
-          </View>
-        )}
-
-        {/* ✅ Mute Button */}
-        {hasAudio && isPlaying && (
-          <TouchableOpacity
-            style={styles.muteButton}
-            onPress={toggleMute}
-            activeOpacity={0.7}
-          >
-            <Icon
-              name={isMuted ? "volume-mute" : "volume-high"}
-              size={20}
-              color="#fff"
+    return (
+      <View style={style}>
+        <View style={styles.videoWrapper}>
+          {/* ✅ Show thumbnail UNTIL the first real frame is ready */}
+          {!isPlaying && thumbnail && (
+            <Image
+              source={{ uri: thumbnail }}
+              style={styles.videoThumbnail}
+              resizeMode="cover"
             />
-          </TouchableOpacity>
-        )}
+          )}
+
+          {/* ✅ Mount once this card has ever been playable, then KEEP mounted.
+              Playback itself is controlled via `paused`, not via mounting. */}
+          {hasEverBeenPlayableRef.current && (
+            <Video
+              ref={videoRef}
+              source={videoSource}
+              style={styles.video}
+              controls={false}
+              paused={isPaused}
+              muted={isMuted}
+              resizeMode="cover"
+              repeat={true}
+              playInBackground={false}
+              playWhenInactive={false}
+              onLoad={handleLoad}
+              onProgress={handleProgress}
+              onReadyForDisplay={handleReadyForDisplay}
+              onError={handleError}
+              ignoreSilentSwitch="ignore"
+              // ✅ Adjusted buffer config for HLS
+              bufferConfig={{
+                minBufferMs: isHLS ? 15000 : 10000,
+                maxBufferMs: isHLS ? 50000 : 30000,
+                bufferForPlaybackMs: isHLS ? 2500 : 1500,
+                bufferForPlaybackAfterRebufferMs: isHLS ? 5000 : 3000,
+              }}
+              // ✅ Additional props for HLS on Android
+              useTextureView={true}
+              disableFocus={true}
+            />
+          )}
+
+          {/* ✅ Play Button */}
+          {!isPlaying && isPaused && !shouldAutoplay && !hasError && (
+            <View style={styles.playButtonOverlay}>
+              <View style={styles.playButtonCircle}>
+                <Icon name="play" size={40} color="#fff" />
+              </View>
+            </View>
+          )}
+
+          {/* ✅ Error fallback — shown instead of a silently blank video area */}
+          {hasError && (
+            <View style={styles.videoErrorOverlay}>
+              <Icon name="alert-circle-outline" size={32} color="#fff" />
+              <Text style={styles.videoErrorText}>Couldn't load video</Text>
+            </View>
+          )}
+
+          {/* ✅ Mute Button — shown on every video that can carry audio, not
+              just the currently active one. Only one video's icon shows
+              unmuted at a time, driven by the shared activeAudioUrl. */}
+          {canHaveAudio && isPlaying && (
+            <TouchableOpacity
+              style={styles.muteButton}
+              onPress={toggleMute}
+              activeOpacity={0.7}
+            >
+              <Icon
+                name={isMuted ? 'volume-mute' : 'volume-high'}
+                size={20}
+                color="#fff"
+              />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
-    </View>
-  );
-});
+    );
+  }
+);
 VideoPlayer.displayName = 'VideoPlayer';
 
 // ✅ MediaItem with HLS detection
-const MediaItem = memo(({
-  media,
-  style,
-  thumbnail,
-  isVideo,
-  shouldAutoplay,
-  isPlayable,
-  hasAudio,
-  itemKey
-}) => {
-  // ✅ Better video detection
-  const isActuallyVideo = isVideo || isVideoUrl(media?.url);
+const MediaItem = memo(
+  ({
+    media,
+    style,
+    thumbnail,
+    isVideo,
+    shouldAutoplay,
+    isPlayable,
+    canHaveAudio,
+    isAudioActive,
+    onRequestActiveAudio,
+    itemKey,
+  }) => {
+    // ✅ Better video detection
+    const isActuallyVideo = isVideo || isVideoUrl(media?.url);
 
-  if (isActuallyVideo) {
-    // If this video shouldn't play, just show thumbnail as static image
-    if (!isPlayable && thumbnail) {
-      return (
-        <View style={style}>
-          <Image
-            source={{ uri: thumbnail }}
-            style={{ width: '100%', height: '100%' }}
-            resizeMode="cover"
-          />
-          <View style={styles.playButtonOverlay}>
-            <View style={styles.playButtonCircle}>
-              <Icon name="play" size={30} color="#fff" />
+    if (isActuallyVideo) {
+      // If this video shouldn't play, just show thumbnail as static image
+      if (!isPlayable && thumbnail) {
+        return (
+          <View style={style}>
+            <Image
+              source={{ uri: thumbnail }}
+              style={{ width: '100%', height: '100%' }}
+              resizeMode="cover"
+            />
+            <View style={styles.playButtonOverlay}>
+              <View style={styles.playButtonCircle}>
+                <Icon name="play" size={30} color="#fff" />
+              </View>
             </View>
           </View>
-        </View>
+        );
+      }
+
+      return (
+        <VideoPlayer
+          media={media}
+          style={style}
+          thumbnail={thumbnail}
+          shouldAutoplay={shouldAutoplay}
+          isPlayable={isPlayable}
+          canHaveAudio={canHaveAudio}
+          isAudioActive={isAudioActive}
+          onRequestActiveAudio={onRequestActiveAudio}
+          videoKey={itemKey}
+        />
       );
     }
 
     return (
-      <VideoPlayer
-        media={media}
-        style={style}
-        thumbnail={thumbnail}
-        shouldAutoplay={shouldAutoplay}
-        isPlayable={isPlayable}
-        hasAudio={hasAudio}
-        videoKey={itemKey}
-      />
+      <FastImageOrImage source={{ uri: media.url }} style={style} resizeMode="cover" />
     );
   }
-
-  return (
-    <FastImageOrImage
-      source={{ uri: media.url }}
-      style={style}
-      resizeMode="cover"
-    />
-  );
-});
+);
 MediaItem.displayName = 'MediaItem';
 
 // ✅ Grid Components
-const Grid1x1 = memo(({ media, thumbnail, isPlayable, getShouldAutoplay, getHasAudio, getThumbnail }) => (
-  <View style={styles.grid1x1Container}>
-    {media.map((m, idx) => (
-      <MediaItem
-        key={m._id || idx}
-        itemKey={`grid1x1-${m._id || idx}`}
-        media={m}
-        style={styles.grid1x1Item}
-        thumbnail={getThumbnail(m)}
-        //hls cloudinary
-        isVideo={isVideoUrl(m?.url)}
-        shouldAutoplay={getShouldAutoplay(m)}
-        isPlayable={isPlayable}
-        hasAudio={getHasAudio(m)}
-      />
-    ))}
-  </View>
-));
+const Grid1x1 = memo(
+  ({
+    media,
+    isPlayable,
+    getShouldAutoplay,
+    getThumbnail,
+    getCanHaveAudio,
+    activeAudioUrl,
+    onRequestActiveAudio,
+  }) => (
+    <View style={styles.grid1x1Container}>
+      {media.map((m, idx) => (
+        <MediaItem
+          key={m._id || idx}
+          itemKey={`grid1x1-${m._id || idx}`}
+          media={m}
+          style={styles.grid1x1Item}
+          thumbnail={getThumbnail(m)}
+          //hls cloudinary
+          isVideo={isVideoUrl(m?.url)}
+          shouldAutoplay={getShouldAutoplay(m)}
+          isPlayable={isPlayable}
+          canHaveAudio={getCanHaveAudio(m)}
+          isAudioActive={activeAudioUrl === m?.url}
+          onRequestActiveAudio={onRequestActiveAudio}
+        />
+      ))}
+    </View>
+  )
+);
 Grid1x1.displayName = 'Grid1x1';
 
-const Grid1x2 = memo(({ media, thumbnail, onCartPress, onStorePress, item, isPlayable, getShouldAutoplay, getHasAudio, getThumbnail }) => (
-  <View style={styles.grid1x2Container}>
-    <View style={styles.grid1x2Left}>
-      {media[0] && (
-        <MediaItem
-          media={media[0]}
-          itemKey={`grid1x2-left-${media[0]._id}`}
-          style={styles.grid1x2LeftItem}
-          thumbnail={getThumbnail(media[0])}
-          //hls cloudinary
-          isVideo={isVideoUrl(media[0]?.url)}
-          shouldAutoplay={getShouldAutoplay(media[0])}
-          isPlayable={isPlayable}
-          hasAudio={getHasAudio(media[0])}
-        />
-      )}
-      <SocialDropdown
-        socialLinks={{
-          whatsapp: item.whatsapp,
-          facebookurl: item.facebookurl,
-          instagramurl: item.instagramurl,
-          storeLink: item.storeLink,
-        }}
-        style={styles.socialDropdown1x2}
-      />
-      {item.product?.[0]?.productisActive && (
-        <TouchableOpacity style={styles.cartButton1x2} onPress={onCartPress}>
-          <Icon name="cart-outline" size={20} color="#fff" />
-        </TouchableOpacity>
-      )}
-    </View>
-
-    <View style={styles.grid1x2RightContainer}>
-      <View style={styles.grid1x2Right}>
-        {media.slice(1, 3).map((m, idx) => (
+const Grid1x2 = memo(
+  ({
+    media,
+    onCartPress,
+    onStorePress,
+    item,
+    isPlayable,
+    getShouldAutoplay,
+    getThumbnail,
+    getCanHaveAudio,
+    activeAudioUrl,
+    onRequestActiveAudio,
+  }) => (
+    <View style={styles.grid1x2Container}>
+      <View style={styles.grid1x2Left}>
+        {media[0] && (
           <MediaItem
-            key={m._id || idx}
-            itemKey={`grid1x2-right-${m._id || idx}`}
-            media={m}
-            style={styles.grid1x2RightItem}
-            thumbnail={getThumbnail(m)}
+            media={media[0]}
+            itemKey={`grid1x2-left-${media[0]._id}`}
+            style={styles.grid1x2LeftItem}
+            thumbnail={getThumbnail(media[0])}
             //hls cloudinary
-            isVideo={isVideoUrl(m?.url)}
-            shouldAutoplay={getShouldAutoplay(m)}
+            isVideo={isVideoUrl(media[0]?.url)}
+            shouldAutoplay={getShouldAutoplay(media[0])}
             isPlayable={isPlayable}
-            hasAudio={getHasAudio(m)}
-          />
-        ))}
-      </View>
-      {item.store?.[0]?.storeisActive && (
-        <TouchableOpacity style={styles.storeButton1x2} onPress={onStorePress}>
-          <Icon name="storefront-outline" size={18} color="#fff" />
-          <Text style={styles.storeButtonText}>Store</Text>
-        </TouchableOpacity>
-      )}
-    </View>
-  </View>
-));
-Grid1x2.displayName = 'Grid1x2';
-
-const Grid1x3 = memo(({ media, thumbnail, onCartPress, onStorePress, item, isPlayable, getShouldAutoplay, getHasAudio, getThumbnail }) => (
-  <View style={styles.grid1x3Container}>
-    <View style={styles.grid1x3Left}>
-      {media[0] && (
-        <MediaItem
-          media={media[0]}
-          itemKey={`grid1x3-left-${media[0]._id}`}
-          style={styles.grid1x3LeftItem}
-          thumbnail={getThumbnail(media[0])}
-          //hls cloudinary
-          isVideo={isVideoUrl(media[0]?.url)}
-          shouldAutoplay={getShouldAutoplay(media[0])}
-          isPlayable={isPlayable}
-          hasAudio={getHasAudio(media[0])}
-        />
-      )}
-      <SocialDropdown
-        socialLinks={{
-          whatsapp: item.whatsapp,
-          facebookurl: item.facebookurl,
-          instagramurl: item.instagramurl,
-          storeLink: item.storeLink,
-        }}
-        style={styles.socialDropdown1x3}
-      />
-      {item.product?.[0]?.productisActive && (
-        <TouchableOpacity style={styles.cartButton1x3} onPress={onCartPress}>
-          <Icon name="cart-outline" size={20} color="#fff" />
-        </TouchableOpacity>
-      )}
-      {item.store?.[0]?.storeisActive && (
-        <TouchableOpacity style={styles.storeButton1x3} onPress={onStorePress}>
-          <Icon name="storefront-outline" size={20} color="#fff" />
-        </TouchableOpacity>
-      )}
-    </View>
-    <View style={styles.grid1x3Right}>
-      {media.slice(1).map((m, idx) => (
-        <MediaItem
-          key={m._id || idx}
-          itemKey={`grid1x3-right-${m._id || idx}`}
-          media={m}
-          style={styles.grid1x3RightItem}
-          thumbnail={getThumbnail(m)}
-          //hls cloudinary
-          isVideo={isVideoUrl(m?.url)}
-          shouldAutoplay={getShouldAutoplay(m)}
-          isPlayable={isPlayable}
-          hasAudio={getHasAudio(m)}
-        />
-      ))}
-    </View>
-  </View>
-));
-Grid1x3.displayName = 'Grid1x3';
-
-const Grid2x2 = memo(({ media, thumbnail, isPlayable, getShouldAutoplay, getHasAudio, getThumbnail }) => (
-  <View style={styles.grid2x2Container}>
-    <View style={styles.grid2x2Row}>
-      {media.slice(0, 2).map((m, idx) => (
-        <MediaItem
-          key={m._id || idx}
-          itemKey={`grid2x2-top-${m._id || idx}`}
-          media={m}
-          style={styles.grid2x2Item}
-          thumbnail={getThumbnail(m)}
-          //hls cloudinary
-          isVideo={isVideoUrl(m?.url)}
-          shouldAutoplay={getShouldAutoplay(m)}
-          isPlayable={isPlayable}
-          hasAudio={getHasAudio(m)}
-        />
-      ))}
-    </View>
-    <View style={styles.grid2x2Row}>
-      {media.slice(2, 4).map((m, idx) => (
-        <MediaItem
-          key={m._id || idx}
-          itemKey={`grid2x2-bottom-${m._id || idx}`}
-          media={m}
-          style={styles.grid2x2Item}
-          thumbnail={getThumbnail(m)}
-          //hls cloudinary
-          isVideo={isVideoUrl(m?.url)}
-          shouldAutoplay={getShouldAutoplay(m)}
-          isPlayable={isPlayable}
-          hasAudio={getHasAudio(m)}
-        />
-      ))}
-    </View>
-  </View>
-));
-Grid2x2.displayName = 'Grid2x2';
-
-const Carousel = memo(({ media, thumbnail, onCartPress, onStorePress, item, isPlayable, getShouldAutoplay, getHasAudio, getThumbnail }) => {
-  const largeImage = media[0];
-  const smallImages = media.slice(1, 4);
-
-  return (
-    <View style={styles.carouselContainer}>
-      <View style={styles.carouselLargeContainer}>
-        {largeImage && (
-          <MediaItem
-            media={largeImage}
-            itemKey={`carousel-large-${largeImage._id}`}
-            style={styles.carouselLargeItem}
-            thumbnail={getThumbnail(largeImage)}
-            //hls cloudinary
-            isVideo={isVideoUrl(largeImage?.url)}
-            shouldAutoplay={getShouldAutoplay(largeImage)}
-            isPlayable={isPlayable}
-            hasAudio={getHasAudio(largeImage)}
+            canHaveAudio={getCanHaveAudio(media[0])}
+            isAudioActive={activeAudioUrl === media[0]?.url}
+            onRequestActiveAudio={onRequestActiveAudio}
           />
         )}
         <SocialDropdown
@@ -532,42 +399,251 @@ const Carousel = memo(({ media, thumbnail, onCartPress, onStorePress, item, isPl
             instagramurl: item.instagramurl,
             storeLink: item.storeLink,
           }}
-          style={styles.socialDropdownCarousel}
+          style={styles.socialDropdown1x2}
         />
         {item.product?.[0]?.productisActive && (
-          <TouchableOpacity style={styles.cartButtonCarousel} onPress={onCartPress}>
+          <TouchableOpacity style={styles.cartButton1x2} onPress={onCartPress}>
             <Icon name="cart-outline" size={20} color="#fff" />
-          </TouchableOpacity>
-        )}
-        {item.store?.[0]?.storeisActive && (
-          <TouchableOpacity style={styles.storeButtonCarousel} onPress={onStorePress}>
-            <Icon name="storefront-outline" size={20} color="#fff" />
           </TouchableOpacity>
         )}
       </View>
 
-      {smallImages.length > 0 && (
-        <View style={styles.carouselSmallContainer}>
-          {smallImages.map((m, idx) => (
-            <View key={m._id || idx} style={styles.carouselSmallItemWrapper}>
-              <MediaItem
-                media={m}
-                itemKey={`carousel-small-${m._id || idx}`}
-                style={styles.carouselSmallItem}
-                thumbnail={getThumbnail(m)}
-                //hls cloudinary
-                isVideo={isVideoUrl(m?.url)}
-                shouldAutoplay={getShouldAutoplay(m)}
-                isPlayable={isPlayable}
-                hasAudio={getHasAudio(m)}
-              />
-            </View>
+      <View style={styles.grid1x2RightContainer}>
+        <View style={styles.grid1x2Right}>
+          {media.slice(1, 3).map((m, idx) => (
+            <MediaItem
+              key={m._id || idx}
+              itemKey={`grid1x2-right-${m._id || idx}`}
+              media={m}
+              style={styles.grid1x2RightItem}
+              thumbnail={getThumbnail(m)}
+              //hls cloudinary
+              isVideo={isVideoUrl(m?.url)}
+              shouldAutoplay={getShouldAutoplay(m)}
+              isPlayable={isPlayable}
+              canHaveAudio={getCanHaveAudio(m)}
+              isAudioActive={activeAudioUrl === m?.url}
+              onRequestActiveAudio={onRequestActiveAudio}
+            />
           ))}
         </View>
-      )}
+        {item.store?.[0]?.storeisActive && (
+          <TouchableOpacity style={styles.storeButton1x2} onPress={onStorePress}>
+            <Icon name="storefront-outline" size={18} color="#fff" />
+            <Text style={styles.storeButtonText}>Store</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
-  );
-});
+  )
+);
+Grid1x2.displayName = 'Grid1x2';
+
+const Grid1x3 = memo(
+  ({
+    media,
+    onCartPress,
+    onStorePress,
+    item,
+    isPlayable,
+    getShouldAutoplay,
+    getThumbnail,
+    getCanHaveAudio,
+    activeAudioUrl,
+    onRequestActiveAudio,
+  }) => (
+    <View style={styles.grid1x3Container}>
+      <View style={styles.grid1x3Left}>
+        {media[0] && (
+          <MediaItem
+            media={media[0]}
+            itemKey={`grid1x3-left-${media[0]._id}`}
+            style={styles.grid1x3LeftItem}
+            thumbnail={getThumbnail(media[0])}
+            //hls cloudinary
+            isVideo={isVideoUrl(media[0]?.url)}
+            shouldAutoplay={getShouldAutoplay(media[0])}
+            isPlayable={isPlayable}
+            canHaveAudio={getCanHaveAudio(media[0])}
+            isAudioActive={activeAudioUrl === media[0]?.url}
+            onRequestActiveAudio={onRequestActiveAudio}
+          />
+        )}
+        <SocialDropdown
+          socialLinks={{
+            whatsapp: item.whatsapp,
+            facebookurl: item.facebookurl,
+            instagramurl: item.instagramurl,
+            storeLink: item.storeLink,
+          }}
+          style={styles.socialDropdown1x3}
+        />
+        {item.product?.[0]?.productisActive && (
+          <TouchableOpacity style={styles.cartButton1x3} onPress={onCartPress}>
+            <Icon name="cart-outline" size={20} color="#fff" />
+          </TouchableOpacity>
+        )}
+        {item.store?.[0]?.storeisActive && (
+          <TouchableOpacity style={styles.storeButton1x3} onPress={onStorePress}>
+            <Icon name="storefront-outline" size={20} color="#fff" />
+          </TouchableOpacity>
+        )}
+      </View>
+      <View style={styles.grid1x3Right}>
+        {media.slice(1).map((m, idx) => (
+          <MediaItem
+            key={m._id || idx}
+            itemKey={`grid1x3-right-${m._id || idx}`}
+            media={m}
+            style={styles.grid1x3RightItem}
+            thumbnail={getThumbnail(m)}
+            //hls cloudinary
+            isVideo={isVideoUrl(m?.url)}
+            shouldAutoplay={getShouldAutoplay(m)}
+            isPlayable={isPlayable}
+            canHaveAudio={getCanHaveAudio(m)}
+            isAudioActive={activeAudioUrl === m?.url}
+            onRequestActiveAudio={onRequestActiveAudio}
+          />
+        ))}
+      </View>
+    </View>
+  )
+);
+Grid1x3.displayName = 'Grid1x3';
+
+const Grid2x2 = memo(
+  ({
+    media,
+    isPlayable,
+    getShouldAutoplay,
+    getThumbnail,
+    getCanHaveAudio,
+    activeAudioUrl,
+    onRequestActiveAudio,
+  }) => (
+    <View style={styles.grid2x2Container}>
+      <View style={styles.grid2x2Row}>
+        {media.slice(0, 2).map((m, idx) => (
+          <MediaItem
+            key={m._id || idx}
+            itemKey={`grid2x2-top-${m._id || idx}`}
+            media={m}
+            style={styles.grid2x2Item}
+            thumbnail={getThumbnail(m)}
+            //hls cloudinary
+            isVideo={isVideoUrl(m?.url)}
+            shouldAutoplay={getShouldAutoplay(m)}
+            isPlayable={isPlayable}
+            canHaveAudio={getCanHaveAudio(m)}
+            isAudioActive={activeAudioUrl === m?.url}
+            onRequestActiveAudio={onRequestActiveAudio}
+          />
+        ))}
+      </View>
+      <View style={styles.grid2x2Row}>
+        {media.slice(2, 4).map((m, idx) => (
+          <MediaItem
+            key={m._id || idx}
+            itemKey={`grid2x2-bottom-${m._id || idx}`}
+            media={m}
+            style={styles.grid2x2Item}
+            thumbnail={getThumbnail(m)}
+            //hls cloudinary
+            isVideo={isVideoUrl(m?.url)}
+            shouldAutoplay={getShouldAutoplay(m)}
+            isPlayable={isPlayable}
+            canHaveAudio={getCanHaveAudio(m)}
+            isAudioActive={activeAudioUrl === m?.url}
+            onRequestActiveAudio={onRequestActiveAudio}
+          />
+        ))}
+      </View>
+    </View>
+  )
+);
+Grid2x2.displayName = 'Grid2x2';
+
+const Carousel = memo(
+  ({
+    media,
+    onCartPress,
+    onStorePress,
+    item,
+    isPlayable,
+    getShouldAutoplay,
+    getThumbnail,
+    getCanHaveAudio,
+    activeAudioUrl,
+    onRequestActiveAudio,
+  }) => {
+    const largeImage = media[0];
+    const smallImages = media.slice(1, 4);
+
+    return (
+      <View style={styles.carouselContainer}>
+        <View style={styles.carouselLargeContainer}>
+          {largeImage && (
+            <MediaItem
+              media={largeImage}
+              itemKey={`carousel-large-${largeImage._id}`}
+              style={styles.carouselLargeItem}
+              thumbnail={getThumbnail(largeImage)}
+              //hls cloudinary
+              isVideo={isVideoUrl(largeImage?.url)}
+              shouldAutoplay={getShouldAutoplay(largeImage)}
+              isPlayable={isPlayable}
+              canHaveAudio={getCanHaveAudio(largeImage)}
+              isAudioActive={activeAudioUrl === largeImage?.url}
+              onRequestActiveAudio={onRequestActiveAudio}
+            />
+          )}
+          <SocialDropdown
+            socialLinks={{
+              whatsapp: item.whatsapp,
+              facebookurl: item.facebookurl,
+              instagramurl: item.instagramurl,
+              storeLink: item.storeLink,
+            }}
+            style={styles.socialDropdownCarousel}
+          />
+          {item.product?.[0]?.productisActive && (
+            <TouchableOpacity style={styles.cartButtonCarousel} onPress={onCartPress}>
+              <Icon name="cart-outline" size={20} color="#fff" />
+            </TouchableOpacity>
+          )}
+          {item.store?.[0]?.storeisActive && (
+            <TouchableOpacity style={styles.storeButtonCarousel} onPress={onStorePress}>
+              <Icon name="storefront-outline" size={20} color="#fff" />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {smallImages.length > 0 && (
+          <View style={styles.carouselSmallContainer}>
+            {smallImages.map((m, idx) => (
+              <View key={m._id || idx} style={styles.carouselSmallItemWrapper}>
+                <MediaItem
+                  media={m}
+                  itemKey={`carousel-small-${m._id || idx}`}
+                  style={styles.carouselSmallItem}
+                  thumbnail={getThumbnail(m)}
+                  //hls cloudinary
+                  isVideo={isVideoUrl(m?.url)}
+                  shouldAutoplay={getShouldAutoplay(m)}
+                  isPlayable={isPlayable}
+                  canHaveAudio={getCanHaveAudio(m)}
+                  isAudioActive={activeAudioUrl === m?.url}
+                  onRequestActiveAudio={onRequestActiveAudio}
+                />
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
+    );
+  }
+);
 Carousel.displayName = 'Carousel';
 
 const MediaOverlay = memo(({ item, onCartPress, onStorePress }) => (
@@ -601,14 +677,11 @@ const Card = memo(
     const sortedMedia = useMemo(() => {
       const allMedia = [...(item.imageFiles || []), ...(item.videoFiles || [])];
       return allMedia.sort(
-        (a, b) =>
-          (a.Imageposition || a.Videoposition || 0) -
-          (b.Imageposition || b.Videoposition || 0)
+        (a, b) => (a.Imageposition || a.Videoposition || 0) - (b.Imageposition || b.Videoposition || 0)
       );
     }, [item.imageFiles, item.videoFiles]);
 
-    // ✅ add this
-    const deletingPostId = useSelector(state => state.post.deletingPostId);
+    const deletingPostId = useSelector((state) => state.post.deletingPostId);
     const isDeleting = deletingPostId === item._id;
     const [isRemovingFromFavouret, setIsRemovingFromFavouret] = useState(false);
 
@@ -617,29 +690,67 @@ const Card = memo(
     // when item.videoFiles itself changes.
     const videoFileByUrl = useMemo(() => {
       const map = new Map();
-      (item.videoFiles || []).forEach(v => map.set(v.url, v));
+      (item.videoFiles || []).forEach((v) => map.set(v.url, v));
       return map;
     }, [item.videoFiles]);
 
     // ✅ Get thumbnail for video files
-    const getThumbnail = useCallback((media) => {
-      // hls cloudinary
-      if (!isVideoUrl(media?.url)) return null;
-      return videoFileByUrl.get(media.url)?.thumbnail || item.thumbnail;
-    }, [videoFileByUrl, item.thumbnail]);
+    const getThumbnail = useCallback(
+      (media) => {
+        if (!isVideoUrl(media?.url)) return null;
+        return videoFileByUrl.get(media.url)?.thumbnail || item.thumbnail;
+      },
+      [videoFileByUrl, item.thumbnail]
+    );
 
-    const getShouldAutoplay = useCallback((media) => {
-      // hls cloudinary
-      if (!isVideoUrl(media?.url)) return false;
-      return videoFileByUrl.get(media.url)?.autoplay === true;
-    }, [videoFileByUrl]);
+    const getShouldAutoplay = useCallback(
+      (media) => {
+        if (!isVideoUrl(media?.url)) return false;
+        return videoFileByUrl.get(media.url)?.autoplay === true;
+      },
+      [videoFileByUrl]
+    );
 
-    const getHasAudio = useCallback((media) => {
-      // hls cloudinary
-      if (!isVideoUrl(media?.url)) return false;
-      const videoFile = videoFileByUrl.get(media.url);
-      return videoFile?.Videoposition === 1 && videoFile?.autoplay === true;
-    }, [videoFileByUrl]);
+    // ✅ Which video currently "owns" audio in this card's media group.
+    // Defaults to the video flagged as the primary audio source.
+    const [activeAudioUrl, setActiveAudioUrl] = useState(() => {
+  const defaultAudioVideo = (item.videoFiles || []).find(
+    (v) => v.Videoposition === 1 && v.autoplay === true
+  );
+  return defaultAudioVideo?.url ?? null;
+});
+
+// ✅ Recompute the default whenever this component instance gets recycled
+// for a DIFFERENT post (FlashList reuses component instances as you scroll,
+// so the useState initializer above only runs once ever — never again for
+// a new item). Without this, a card that gets recycled inherits whatever
+// activeAudioUrl was left over from the previous post it displayed, which
+// won't match any of the new post's video urls — so everything ends up
+// muted by default instead of the position-1 video being unmuted.
+useEffect(() => {
+  const defaultAudioVideo = (item.videoFiles || []).find(
+    (v) => v.Videoposition === 1 && v.autoplay === true
+  );
+  setActiveAudioUrl(defaultAudioVideo?.url ?? null);
+}, [item._id]);
+
+    // ✅ Tapping a video's mute icon claims audio for it (and silences
+    // whichever video had it before, since only one url can ever match).
+    // Tapping the currently-active one again releases it (mutes all).
+    const requestActiveAudio = useCallback((url) => {
+      setActiveAudioUrl((prev) => (prev === url ? null : url));
+    }, []);
+
+    // ✅ "Can this video carry audio at all" (i.e. it has autoplay/audio data),
+    // not "is it the currently active one".
+    const getCanHaveAudio = useCallback(
+      (media) => {
+        if (!isVideoUrl(media?.url)) return false;
+        const videoFile = videoFileByUrl.get(media.url);
+        return videoFile?.autoplay === true;
+      },
+      [videoFileByUrl]
+    );
 
     const navigation = useNavigation();
     const [storeModalVisible, setStoreModalVisible] = useState(false);
@@ -647,18 +758,12 @@ const Card = memo(
 
     const handleSelectProduct = (product) => {
       setProductModalVisible(false);
-      console.log('FULL product object:', JSON.stringify(product)); // ← add this
-      console.log('Selected productId:', item?.product?.[0]?.ProductId); // ✅ Verify correct productId is selected
-      console.log('selected product from ', product?._id)
-      console.log('selected product from ', product?.storeId)
-
-      navigation.navigate('StoreScreen', {      // ← root app stack name for StoreScreens
-        screen: 'StoreTabs',                     // ← inside StoreNavigator stack
+      navigation.navigate('StoreScreen', {
+        screen: 'StoreTabs',
         params: {
-          storeIdfromcard: product?.storeId,             // ← StoreTabs needs this
-          source: 'card',
           storeIdfromcard: product?.storeId,
-          screen: 'Store_ProductDetail',         // ← tab inside StoreTabs
+          source: 'card',
+          screen: 'Store_ProductDetail',
           params: {
             productIdfromcard: product?._id,
             storeIdfromcard: product?.storeId,
@@ -670,9 +775,7 @@ const Card = memo(
 
     const handleSelectStore = (store) => {
       setStoreModalVisible(false);
-      console.log('selected storeId from ', store?._id)
-      console.log('Selected storeId:', item?.store?._id);
-      navigation.navigate('StoreScreen', { storeIdfromcard: store?._id, source: 'card' }); // adjust screen name as needed
+      navigation.navigate('StoreScreen', { storeIdfromcard: store?._id, source: 'card' });
     };
 
     const handleCartPress = useCallback(() => {
@@ -684,8 +787,7 @@ const Card = memo(
     const handleStorePress = useCallback(() => {
       if (item?.store?.length > 1) {
         setStoreModalVisible(true);
-      }
-      else if (item?.store?.length === 1) {
+      } else if (item?.store?.length === 1) {
         navigation.navigate('StoreScreen', { storeIdfromcard: item.store?.[0]?.storeId });
       }
     }, [item.store]);
@@ -729,10 +831,12 @@ const Card = memo(
               style={styles.singleImage}
               thumbnail={getThumbnail(sortedMedia[0])}
               //hls cloudinary
-              isVideo={isVideoUrl(sortedMedia[0]?.url)}  // ✅ USE isVideoUrl
+              isVideo={isVideoUrl(sortedMedia[0]?.url)}
               shouldAutoplay={getShouldAutoplay(sortedMedia[0])}
               isPlayable={isPlayable}
-              hasAudio={getHasAudio(sortedMedia[0])}
+              canHaveAudio={getCanHaveAudio(sortedMedia[0])}
+              isAudioActive={activeAudioUrl === sortedMedia[0]?.url}
+              onRequestActiveAudio={requestActiveAudio}
             />
           </View>
         );
@@ -742,10 +846,11 @@ const Card = memo(
         return (
           <Grid1x1
             media={sortedMedia}
-            thumbnail={item.thumbnail}
             isPlayable={isPlayable}
             getShouldAutoplay={getShouldAutoplay}
-            getHasAudio={getHasAudio}
+            getCanHaveAudio={getCanHaveAudio}
+            activeAudioUrl={activeAudioUrl}
+            onRequestActiveAudio={requestActiveAudio}
             getThumbnail={getThumbnail}
           />
         );
@@ -755,13 +860,14 @@ const Card = memo(
         return (
           <Grid1x2
             media={sortedMedia}
-            thumbnail={item.thumbnail}
             onCartPress={handleCartPress}
             onStorePress={handleStorePress}
             item={item}
             isPlayable={isPlayable}
             getShouldAutoplay={getShouldAutoplay}
-            getHasAudio={getHasAudio}
+            getCanHaveAudio={getCanHaveAudio}
+            activeAudioUrl={activeAudioUrl}
+            onRequestActiveAudio={requestActiveAudio}
             getThumbnail={getThumbnail}
           />
         );
@@ -771,13 +877,14 @@ const Card = memo(
         return (
           <Grid1x3
             media={sortedMedia}
-            thumbnail={item.thumbnail}
             onCartPress={handleCartPress}
             onStorePress={handleStorePress}
             item={item}
             isPlayable={isPlayable}
             getShouldAutoplay={getShouldAutoplay}
-            getHasAudio={getHasAudio}
+            getCanHaveAudio={getCanHaveAudio}
+            activeAudioUrl={activeAudioUrl}
+            onRequestActiveAudio={requestActiveAudio}
             getThumbnail={getThumbnail}
           />
         );
@@ -787,10 +894,11 @@ const Card = memo(
         return (
           <Grid2x2
             media={sortedMedia}
-            thumbnail={item.thumbnail}
             isPlayable={isPlayable}
             getShouldAutoplay={getShouldAutoplay}
-            getHasAudio={getHasAudio}
+            getCanHaveAudio={getCanHaveAudio}
+            activeAudioUrl={activeAudioUrl}
+            onRequestActiveAudio={requestActiveAudio}
             getThumbnail={getThumbnail}
           />
         );
@@ -800,24 +908,21 @@ const Card = memo(
         return (
           <Carousel
             media={sortedMedia}
-            thumbnail={item.thumbnail}
             onCartPress={handleCartPress}
             onStorePress={handleStorePress}
             item={item}
             isPlayable={isPlayable}
             getShouldAutoplay={getShouldAutoplay}
-            getHasAudio={getHasAudio}
+            getCanHaveAudio={getCanHaveAudio}
+            activeAudioUrl={activeAudioUrl}
+            onRequestActiveAudio={requestActiveAudio}
             getThumbnail={getThumbnail}
           />
         );
       }
 
       return (
-        <FastImageOrImage
-          source={{ uri: item.thumbnail }}
-          style={styles.thumbnail}
-          resizeMode="cover"
-        />
+        <FastImageOrImage source={{ uri: item.thumbnail }} style={styles.thumbnail} resizeMode="cover" />
       );
     }, [
       mediaType,
@@ -833,7 +938,9 @@ const Card = memo(
       item.store,
       isPlayable,
       getShouldAutoplay,
-      getHasAudio,
+      getCanHaveAudio,
+      activeAudioUrl,
+      requestActiveAudio,
       getThumbnail,
       handleCartPress,
       handleStorePress,
@@ -861,28 +968,18 @@ const Card = memo(
         />
 
         <View style={styles.mediaContainer}>
-          <TouchableOpacity
-            style={styles.mediaContent}
-            onPress={handleCardPress}
-            activeOpacity={0.97}
-          >
+          <TouchableOpacity style={styles.mediaContent} onPress={handleCardPress} activeOpacity={0.97}>
             {mediaContent}
           </TouchableOpacity>
 
           {needsOverlay && (
-            <MediaOverlay
-              item={item}
-              onCartPress={handleCartPress}
-              onStorePress={handleStorePress}
-            />
+            <MediaOverlay item={item} onCartPress={handleCartPress} onStorePress={handleStorePress} />
           )}
         </View>
 
         <View style={styles.engagementSection}>
           <View style={styles.statsSection}>
-            <Text style={styles.stats}>
-              {`${item.views || 0} views • ${formattedDate}`}
-            </Text>
+            <Text style={styles.stats}>{`${item.views || 0} views • ${formattedDate}`}</Text>
             <View style={styles.ratingContainer}>
               <Text style={styles.rating}>★ {(item.averageRating || 0).toFixed(1)}</Text>
               <Text style={styles.ratingCount}>({item.ratingCount || 0})</Text>
@@ -899,7 +996,7 @@ const Card = memo(
           sheetTitle="Select Product"
           sheetSubtitle="Choose a product to view details"
           items={Array.isArray(item.product) ? item.product : item.product ?? []}
-          ids={(Array.isArray(item.product) ? item.product : []).map(p => p.ProductId).filter(Boolean)}
+          ids={(Array.isArray(item.product) ? item.product : []).map((p) => p.ProductId).filter(Boolean)}
           handleSelectItem={handleSelectProduct}
           isProductEnabled={true}
         />
@@ -910,7 +1007,7 @@ const Card = memo(
           sheetTitle="Select Store"
           sheetSubtitle="Choose which store you'd like to visit"
           items={Array.isArray(item.store) ? item.store : item.store ?? []}
-          ids={(Array.isArray(item.store) ? item.store : []).map(s => s.storeId).filter(Boolean)}
+          ids={(Array.isArray(item.store) ? item.store : []).map((s) => s.storeId).filter(Boolean)}
           handleSelectItem={handleSelectStore}
           isStoreEnabled={true}
         />
@@ -922,8 +1019,8 @@ const Card = memo(
       prevProps.item._id === nextProps.item._id &&
       prevProps.isVisible === nextProps.isVisible &&
       prevProps.isPlayable === nextProps.isPlayable &&
-      prevProps.item.hasRated === nextProps.item.hasRated &&        // ✅
-      prevProps.item.myRatingValue === nextProps.item.myRatingValue // ✅
+      prevProps.item.hasRated === nextProps.item.hasRated &&
+      prevProps.item.myRatingValue === nextProps.item.myRatingValue
     );
   }
 );
@@ -1321,8 +1418,6 @@ const styles = StyleSheet.create({
 });
 
 export default Card;
-
-
 
 // ++++++++++++++++++++++++++++++++++++++++++  little Old ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
